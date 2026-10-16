@@ -1,0 +1,781 @@
+// Talent-on-Demand platform data model.
+// Section references (FR-xxx, BR-xx) point to the Platform Requirements Definition V-002.
+// All money amounts are integers in santim (1 ETB = 100 santim) to avoid rounding errors.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Accounts, consent and authentication (4.1)
+// ---------------------------------------------------------------------------
+
+enum Role {
+  TALENT
+  CLIENT
+  VETTING_OFFICER
+  SUPPORT_AGENT
+  FINANCE_OFFICER
+  MEL_OFFICER
+  PLATFORM_ADMIN
+  SUPER_ADMIN
+  AUDITOR
+  PARTNER_VIEWER
+}
+
+enum AccountStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum Language {
+  en
+  am
+}
+
+enum IdentityStatus {
+  UNVERIFIED
+  PENDING
+  PROVISIONAL
+  VERIFIED
+  FAILED
+}
+
+enum Sex {
+  FEMALE
+  MALE
+}
+
+model User {
+  id               String         @id @default(cuid())
+  phone            String         @unique
+  passwordHash     String
+  displayName      String
+  language         Language       @default(en)
+  status           AccountStatus  @default(PENDING)
+  roles            Role[]
+  failedLoginCount Int            @default(0)
+  lockedUntil      DateTime?
+  mfaSecret        String?
+  mfaEnabled       Boolean        @default(false)
+  email            String?
+  telegramChatId   String?
+  notifyChannels   String[]       @default(["IN_APP", "SMS"])
+  // Identity verification results, written only through IdentityVerificationService (4.2).
+  identityStatus   IdentityStatus @default(UNVERIFIED)
+  identityToken    String?        @unique
+  identityMasked   String?
+  verifiedName     String?
+  sex              Sex?
+  dateOfBirth      DateTime?
+  photoFileId      String?
+  identityVerifiedAt DateTime?
+  // Designated safeguarding staff may see confidential cases (FR-SUP-02).
+  safeguardingDesignated Boolean  @default(false)
+  assistedById     String?
+  assistedBy       User?          @relation("AssistedRegistration", fields: [assistedById], references: [id])
+  assistedUsers    User[]         @relation("AssistedRegistration")
+  suspensionReason String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  lastSignInAt     DateTime?
+  deactivatedAt    DateTime?
+  erasureRequestedAt DateTime?
+
+  consents         Consent[]
+  devices          TrustedDevice[]
+  talentProfile    TalentProfile?
+  clientProfile    ClientProfile?
+  notifications    Notification[]
+  files            FileObject[]
+}
+
+model Consent {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  document    String    // TERMS, PRIVACY, COMMUNITY or a purpose-specific consent
+  version     String
+  acceptedAt  DateTime  @default(now())
+  withdrawnAt DateTime?
+  recordedById String?  // support agent for assisted registration
+
+  @@index([userId, document])
+}
+
+model OtpCode {
+  id         String    @id @default(cuid())
+  phone      String
+  purpose    String    // REGISTER, NEW_DEVICE, RESET, ASSISTED_CONSENT
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([phone, purpose])
+}
+
+model TrustedDevice {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  deviceHash String
+  createdAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  @@unique([userId, deviceHash])
+}
+
+// ---------------------------------------------------------------------------
+// Talent profile and tiering (4.3)
+// ---------------------------------------------------------------------------
+
+enum Tier {
+  ENTRY
+  INTERMEDIATE
+  EXPERT
+}
+
+enum VettingStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  APPROVED
+  REJECTED
+}
+
+enum WorkMode {
+  REMOTE
+  ONSITE
+  BOTH
+}
+
+enum PayoutChannel {
+  BANK
+  TELEBIRR
+  CBE_BIRR
+}
+
+model TalentProfile {
+  id                 String        @id @default(cuid())
+  userId             String        @unique
+  user               User          @relation(fields: [userId], references: [id])
+  headline           String?
+  bio                String?
+  city               String        @default("Addis Ababa")
+  subCity            String?
+  education          Json          @default("[]")
+  credentials        Json          @default("[]")
+  experience         Json          @default("[]")
+  skills             String[]
+  languages          String[]
+  hoursPerWeek       Int?
+  workingDays        String[]
+  workMode           WorkMode      @default(REMOTE)
+  // Voluntary, never shown publicly (FR-TAL-02, FR-TAL-03).
+  disability         Boolean?
+  disabilityConfirmed Boolean      @default(false)
+  displaced          Boolean?
+  otherMarginalised  Boolean?
+  // Payout account (FR-TAL-09). Account number is field-encrypted.
+  payoutChannel      PayoutChannel?
+  payoutAccountEnc   String?
+  payoutAccountMasked String?
+  payoutAccountName  String?
+  payoutNameVerified Boolean       @default(false)
+  // Written by the vetting module (developer), read by the marketplace.
+  vettingStatus      VettingStatus @default(NOT_STARTED)
+  publishedAt        DateTime?
+  avgResponseMinutes Int?
+  onboardingStep     Int           @default(0)
+  visibility         String        @default("NORMAL") // NORMAL or REDUCED (sanctions)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  tiers              TalentTier[]
+  portfolio          PortfolioItem[]
+}
+
+model TalentTier {
+  id            String        @id @default(cuid())
+  talentId      String
+  talent        TalentProfile @relation(fields: [talentId], references: [id])
+  serviceAreaId String
+  serviceArea   ServiceArea   @relation(fields: [serviceAreaId], references: [id])
+  tier          Tier
+  testScore     Int?
+  assignedById  String?
+  assignedAt    DateTime      @default(now())
+
+  @@unique([talentId, serviceAreaId])
+}
+
+model PortfolioItem {
+  id          String        @id @default(cuid())
+  talentId    String
+  talent      TalentProfile @relation(fields: [talentId], references: [id])
+  title       String
+  description String
+  url         String?
+  fileId      String?
+  createdAt   DateTime      @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Clients (4.5)
+// ---------------------------------------------------------------------------
+
+enum ClientLevel {
+  VERIFIED_ENTERPRISE
+  BASIC_ENTERPRISE
+  INDIVIDUAL
+}
+
+model ClientProfile {
+  id               String      @id @default(cuid())
+  userId           String      @unique
+  user             User        @relation(fields: [userId], references: [id])
+  level            ClientLevel
+  enterpriseName   String?
+  tradeLicenceNo   String?
+  tin              String?
+  sector           String?
+  city             String      @default("Addis Ababa")
+  subCity          String?
+  staffSize        Int?
+  womenLed         Boolean?
+  youthLed         Boolean?
+  pwdOwned         Boolean?
+  activityEvidence String?     // referral partner or site evidence note (FR-CLI-03)
+  evidenceFileId   String?
+  referralSource   String      // ASSOCIATION, SUBCITY_OFFICE, CAMPAIGN, OTHER
+  referralDetail   String?
+  levelConfirmedAt DateTime?
+  levelConfirmedById String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Service package catalogue (4.6)
+// ---------------------------------------------------------------------------
+
+model ServiceArea {
+  id       String       @id @default(cuid())
+  code     String       @unique
+  nameEn   String
+  nameAm   String
+  sort     Int          @default(0)
+  packages Package[]
+  tiers    TalentTier[]
+}
+
+model Package {
+  id               String           @id @default(cuid())
+  code             String           @unique
+  serviceAreaId    String
+  serviceArea      ServiceArea      @relation(fields: [serviceAreaId], references: [id])
+  status           String           @default("ACTIVE") // ACTIVE or RETIRED
+  extensionCategory Boolean         @default(false)
+  currentVersionId String?          @unique
+  currentVersion   PackageVersion?  @relation("CurrentVersion", fields: [currentVersionId], references: [id])
+  versions         PackageVersion[] @relation("Versions")
+  createdAt        DateTime         @default(now())
+}
+
+model PackageVersion {
+  id                 String       @id @default(cuid())
+  packageId          String
+  package            Package      @relation("Versions", fields: [packageId], references: [id])
+  currentOf          Package?     @relation("CurrentVersion")
+  version            Int
+  titleEn            String
+  titleAm            String
+  scopeEn            String
+  scopeAm            String
+  exclusionsEn       String
+  exclusionsAm       String
+  deliverableEn      String
+  deliverableAm      String
+  turnaroundDays     Int
+  revisionLimit      Int
+  checklistEn        String[]
+  checklistAm        String[]
+  minTier            Tier
+  priceMin           Int          // santim
+  priceMax           Int          // santim
+  priceStandard      Int          // santim; the package price talents can accept directly
+  createdById        String?
+  createdAt          DateTime     @default(now())
+  assignments        Assignment[]
+
+  @@unique([packageId, version])
+}
+
+// ---------------------------------------------------------------------------
+// Assignments, matching, proposals and milestones (4.7, 4.8)
+// ---------------------------------------------------------------------------
+
+enum AssignmentStatus {
+  REQUESTED   // client need captured, not yet scoped (support converts it)
+  OPEN        // invitations out, proposals being received
+  AGREED
+  FUNDED
+  DELIVERED
+  ACCEPTED
+  DISPUTED
+  CLOSED
+  CANCELLED
+}
+
+model Assignment {
+  id               String           @id @default(cuid())
+  ref              String           @unique
+  clientId         String
+  talentId         String?
+  packageVersionId String?
+  packageVersion   PackageVersion?  @relation(fields: [packageVersionId], references: [id])
+  serviceAreaId    String?
+  custom           Boolean          @default(false)
+  title            String
+  brief            String
+  budgetMax        Int?
+  agreedPrice      Int?
+  commissionRate   Decimal?         @db.Decimal(5, 4)
+  commissionRule   String?
+  status           AssignmentStatus @default(OPEN)
+  deadline         DateTime?
+  createdById      String           // client, or support agent on their behalf
+  repeatOfId       String?
+  directTalentId   String?          // repeat engagement (FR-MAT-08)
+  cancelReason     String?
+  cancelRequestedById String?
+  cancelRequestedAt DateTime?
+  agreedAt         DateTime?
+  fundedAt         DateTime?
+  closedAt         DateTime?
+  noProposalAlertAt DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  milestones       Milestone[]
+  invitations      Invitation[]
+  proposals        Proposal[]
+  priceRecords     PriceRecord[]
+  events           AssignmentEvent[]
+  messages         Message[]
+  disputes         Dispute[]
+  ratings          Rating[]
+  payments         PaymentInstruction[]
+
+  @@index([clientId])
+  @@index([talentId])
+  @@index([status])
+}
+
+model AssignmentEvent {
+  id           String     @id @default(cuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  fromStatus   String?
+  toStatus     String
+  actorId      String?
+  note         String?
+  at           DateTime   @default(now())
+}
+
+model Invitation {
+  id           String     @id @default(cuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  talentId     String
+  rank         Int
+  score        Float
+  scoreDetail  Json
+  inclusionSlot Boolean   @default(false)
+  status       String     @default("INVITED") // INVITED, PROPOSED, DECLINED, EXPIRED, WITHDRAWN
+  respondBy    DateTime
+  respondedAt  DateTime?
+  declineReason String?
+  createdAt    DateTime   @default(now())
+
+  @@unique([assignmentId, talentId])
+}
+
+model Proposal {
+  id           String     @id @default(cuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  talentId     String
+  amount       Int
+  atPackagePrice Boolean  @default(false)
+  deliveryDays Int?
+  message      String?
+  status       String     @default("SUBMITTED") // SUBMITTED, COUNTERED, ACCEPTED, REJECTED, WITHDRAWN
+  counterAmount Int?
+  counterReason String?
+  rejectReason String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([assignmentId, talentId])
+}
+
+// Every price offered, countered, accepted and refused (FR-MAT-06).
+model PriceRecord {
+  id           String     @id @default(cuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  actorId      String
+  actorRole    String     // CLIENT or TALENT
+  talentId     String?
+  kind         String     // OFFERED, COUNTERED, ACCEPTED, REFUSED
+  amount       Int
+  reason       String?
+  at           DateTime   @default(now())
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  DELIVERED
+  REVISION_REQUESTED
+  ACCEPTED
+  DISPUTED
+  SETTLED
+  REFUNDED
+  CANCELLED
+}
+
+model Milestone {
+  id                String          @id @default(cuid())
+  assignmentId      String
+  assignment        Assignment      @relation(fields: [assignmentId], references: [id])
+  seq               Int
+  title             String
+  amount            Int
+  deadline          DateTime?
+  status            MilestoneStatus @default(PENDING)
+  revisionsUsed     Int             @default(0)
+  deliveredAt       DateTime?
+  reviewWindowEndsAt DateTime?
+  remindersSent     Int             @default(0)
+  acceptedAt        DateTime?
+  acceptedById      String?
+  autoAccepted      Boolean         @default(false)
+  deadlineAlertedAt DateTime?
+  deadlineMissedAt  DateTime?
+  deliveries        Delivery[]
+  settlement        Settlement?
+
+  @@unique([assignmentId, seq])
+}
+
+model Delivery {
+  id          String    @id @default(cuid())
+  milestoneId String
+  milestone   Milestone @relation(fields: [milestoneId], references: [id])
+  note        String
+  links       String[]
+  fileIds     String[]
+  checklist   Json      // [{ item, done }]
+  submittedAt DateTime  @default(now())
+  revisionRequest String?
+  revisionRequestedAt DateTime?
+}
+
+// ---------------------------------------------------------------------------
+// Payments boundary (4.9). The escrow ledger and reconciliation belong to the
+// developer's escrow module; this side records instructions and settlements.
+// ---------------------------------------------------------------------------
+
+model PaymentInstruction {
+  id             String     @id @default(cuid())
+  assignmentId   String
+  assignment     Assignment @relation(fields: [assignmentId], references: [id])
+  reference      String     @unique
+  amount         Int
+  channel        String?    // BANK, TELEBIRR, CBE_BIRR
+  status         String     @default("PENDING") // PENDING, CONFIRMED, FAILED, CANCELLED
+  providerRef    String?
+  confirmedAt    DateTime?
+  createdAt      DateTime   @default(now())
+}
+
+model Settlement {
+  id             String    @id @default(cuid())
+  milestoneId    String    @unique
+  milestone      Milestone @relation(fields: [milestoneId], references: [id])
+  gross          Int
+  commissionRate Decimal   @db.Decimal(5, 4)
+  commission     Int
+  net            Int
+  refundAmount   Int       @default(0)
+  kind           String    // RELEASE, REFUND, SPLIT
+  status         String    @default("INSTRUCTED") // INSTRUCTED, PAID, FAILED
+  instructionRef String    @unique
+  reason         String    // ACCEPTED, REVIEW_WINDOW_EXPIRED, DISPUTE_DECISION, CANCELLED_BY_AGREEMENT
+  createdAt      DateTime  @default(now())
+  paidAt         DateTime?
+}
+
+// Calls made across the escrow port, kept so the developer's module and the
+// marketplace can be reconciled with each other.
+model EscrowInstruction {
+  id             String   @id @default(cuid())
+  idempotencyKey String   @unique
+  kind           String   // COLLECT, RELEASE, REFUND, SPLIT, FREEZE, UNFREEZE
+  assignmentRef  String
+  payload        Json
+  provider       String
+  status         String   @default("SENT")
+  response       Json?
+  createdAt      DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Disputes (4.12)
+// ---------------------------------------------------------------------------
+
+model Dispute {
+  id             String     @id @default(cuid())
+  ref            String     @unique
+  assignmentId   String
+  assignment     Assignment @relation(fields: [assignmentId], references: [id])
+  milestoneId    String
+  openedById     String
+  openedByRole   String
+  reason         String
+  amountDisputed Int
+  stage          String     @default("INTAKE") // INTAKE, FACILITATION, DECISION, APPEAL, CLOSED
+  ownerId        String?
+  evidence       Json
+  remedy         String?    // CORRECTION, PARTIAL_ACCEPTANCE, MILESTONE_ADJUSTMENT, REFUND, REASSIGNMENT, RELEASE_IN_FULL
+  accountAction  String?    // optional account action recorded with the remedy (ACCOUNT_ACTION)
+  releaseAmount  Int?
+  refundAmount   Int?
+  decisionNote   String?
+  decidedById    String?
+  decidedAt      DateTime?
+  approvalId     String?
+  decisionStatus String?    // PENDING_APPROVAL, APPROVED, EXECUTED, REJECTED
+  appealBy       DateTime?
+  appealedAt     DateTime?
+  appealedById   String?
+  appealReason   String?
+  finalDecision  Boolean    @default(false)
+  clientAcceptedAt DateTime?
+  talentAcceptedAt DateTime?
+  alertsSent     String[]
+  closedAt       DateTime?
+  createdAt      DateTime   @default(now())
+  notes          DisputeNote[]
+}
+
+model DisputeNote {
+  id        String   @id @default(cuid())
+  disputeId String
+  dispute   Dispute  @relation(fields: [disputeId], references: [id])
+  authorId  String
+  authorRole String  // CLIENT, TALENT or STAFF
+  internal  Boolean  @default(false) // staff-only notes
+  body      String
+  fileIds   String[]
+  at        DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Ratings (4.13)
+// ---------------------------------------------------------------------------
+
+model Rating {
+  id           String     @id @default(cuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  raterId      String
+  rateeId      String
+  direction    String     // CLIENT_TO_TALENT or TALENT_TO_CLIENT
+  scores       Json
+  average      Float
+  comment      String?
+  reply        String?
+  repliedAt    DateTime?
+  publishedAt  DateTime?
+  removedReason String?
+  removedById  String?
+  createdAt    DateTime   @default(now())
+
+  @@unique([assignmentId, direction])
+}
+
+// ---------------------------------------------------------------------------
+// Messaging and notifications (4.14)
+// ---------------------------------------------------------------------------
+
+model Message {
+  id           String     @id @default(cuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  // Each thread is between the client and one talent; before agreement every
+  // invited talent has their own thread with the client.
+  threadTalentId String
+  senderId     String
+  body         String
+  fileIds      String[]
+  masked       Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+
+  @@index([assignmentId, threadTalentId, createdAt])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  type      String
+  title     String
+  body      String
+  link      String?
+  channels  String[]
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+}
+
+model OutboundMessage {
+  id        String   @id @default(cuid())
+  channel   String   // SMS, EMAIL, TELEGRAM
+  to        String
+  body      String
+  status    String   @default("QUEUED")
+  provider  String?
+  error     String?
+  createdAt DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Support, safeguarding and inclusion (4.15)
+// ---------------------------------------------------------------------------
+
+model Ticket {
+  id              String    @id @default(cuid())
+  ref             String    @unique
+  requesterId     String?
+  createdById     String
+  source          String    // APP, CALL_LINE, ASSISTED_DESK
+  category        String
+  subject         String
+  description     String
+  ownerId         String?
+  status          String    @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  confidential    Boolean   @default(false)
+  safeguardingType String?  // HARASSMENT, EXPLOITATION, DISCRIMINATION, FRAUD
+  acknowledgeBy   DateTime?
+  acknowledgedAt  DateTime?
+  resolvedAt      DateTime?
+  outcome         String?
+  assignmentId    String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  updates         TicketUpdate[]
+}
+
+model TicketUpdate {
+  id       String   @id @default(cuid())
+  ticketId String
+  ticket   Ticket   @relation(fields: [ticketId], references: [id])
+  authorId String
+  body     String
+  internal Boolean  @default(false)
+  at       DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Administration (4.16), parameters (section 5) and audit
+// ---------------------------------------------------------------------------
+
+model Parameter {
+  key         String   @id
+  value       Json
+  category    String   // FINANCIAL or OPERATIONAL
+  description String
+  effectiveFrom DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ParameterChange {
+  id           String    @id @default(cuid())
+  key          String
+  oldValue     Json?
+  newValue     Json
+  reason       String
+  requestedById String
+  requestedAt  DateTime  @default(now())
+  status       String    @default("PENDING") // PENDING, APPLIED, REJECTED
+  decidedById  String?
+  decidedAt    DateTime?
+}
+
+// Maker-checker approvals for financial actions (FR-ESC-07, FR-DSP-05).
+model Approval {
+  id           String    @id @default(cuid())
+  kind         String    // DISPUTE_DECISION, MANUAL_RELEASE, MANUAL_REFUND
+  subjectId    String
+  payload      Json
+  requestedById String
+  requestedAt  DateTime  @default(now())
+  status       String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  decidedById  String?
+  decidedAt    DateTime?
+  note         String?
+}
+
+// Append-only, hash-chained (FR-ADM-05, NFR-SEC-07). A database trigger blocks
+// UPDATE and DELETE; see the migration "audit_log_append_only".
+model AuditLog {
+  id         BigInt   @id @default(autoincrement())
+  at         DateTime @default(now())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String?
+  before     Json?
+  after      Json?
+  ip         String?
+  prevHash   String?
+  hash       String
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([action])
+}
+
+model FileObject {
+  id         String   @id @default(cuid())
+  ownerId    String
+  owner      User     @relation(fields: [ownerId], references: [id])
+  storageKey String   @unique
+  name       String
+  mime       String
+  size       Int
+  sha256     String
+  scanStatus String   @default("PENDING") // PENDING, CLEAN, INFECTED, SKIPPED
+  purpose    String   // PORTFOLIO, DELIVERY, MESSAGE, EVIDENCE, TICKET, PHOTO
+  // What the file is attached to, used for access checks on download.
+  linkedType String?  // ASSIGNMENT, TICKET, PORTFOLIO, CLIENT_PROFILE
+  linkedId   String?
+  createdAt  DateTime @default(now())
+}
+
+model Sequence {
+  name  String @id
+  value Int    @default(0)
+}
