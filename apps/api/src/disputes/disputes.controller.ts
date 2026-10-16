@@ -60,6 +60,7 @@ export class DisputesController {
     return this.disputes.get(me, id);
   }
 
+  @Roles('CLIENT', 'TALENT', 'SUPPORT_AGENT', 'PLATFORM_ADMIN', 'SUPER_ADMIN', 'FINANCE_OFFICER')
   @Post(':id/notes')
   note(@CurrentUser() me: SessionUser, @Param('id') id: string, @Body() dto: NoteDto) {
     return this.disputes.addNote(me, id, dto.body, !!dto.internal, dto.fileIds);

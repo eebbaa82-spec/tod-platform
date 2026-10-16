@@ -137,7 +137,9 @@ export class ReportsService {
           netIncomeSantim: ts.reduce((s, t) => s + (incomeBy.get(t.userId) ?? 0), 0),
           averageNetIncomeSantim: earners.length ? Math.round(earners.reduce((s, t) => s + incomeBy.get(t.userId)!, 0) / earners.length) : null,
         };
-        return suppress(row, threshold);
+        // Income for fewer earners than the threshold would reveal individual pay.
+        const safe: any = earners.length > 0 && earners.length < threshold ? { ...row, netIncomeSantim: 'suppressed', averageNetIncomeSantim: 'suppressed' } : row;
+        return suppress(safe, threshold);
       });
     }
     return { threshold, suppressionNote: `Figures describing fewer than ${threshold} people are shown as suppressed.`, breakdown: out };

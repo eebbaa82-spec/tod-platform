@@ -121,13 +121,13 @@ export class AdminController {
   }
 
   @Get('audit')
-  @Roles('SUPER_ADMIN', 'PLATFORM_ADMIN', 'FINANCE_OFFICER')
+  @Roles('SUPER_ADMIN', 'PLATFORM_ADMIN', 'FINANCE_OFFICER', 'AUDITOR')
   auditLog(@Query() q: any) {
     return this.admin.auditLog({ ...q, take: q.take ? Number(q.take) : undefined });
   }
 
   @Get('audit/verify')
-  @Roles('SUPER_ADMIN', 'PLATFORM_ADMIN')
+  @Roles('SUPER_ADMIN', 'PLATFORM_ADMIN', 'AUDITOR')
   verify() {
     return this.audit.verifyChain();
   }

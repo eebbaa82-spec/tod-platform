@@ -8,7 +8,7 @@ import { MilestonesService } from './milestones.service';
 export class AssignmentsController {
   constructor(private readonly assignments: AssignmentsService, private readonly milestones: MilestonesService) {}
 
-  @Roles('CLIENT', 'SUPPORT_AGENT')
+  @Roles('CLIENT', 'SUPPORT_AGENT', 'PLATFORM_ADMIN', 'SUPER_ADMIN')
   @Post()
   create(@CurrentUser() me: SessionUser, @Body() dto: CreateAssignmentDto) {
     return this.assignments.create(me, dto);

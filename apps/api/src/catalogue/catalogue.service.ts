@@ -29,7 +29,7 @@ export class CatalogueService {
   async get(code: string) {
     const p = await this.prisma.package.findUnique({
       where: { code },
-      include: { currentVersion: true, serviceArea: true, versions: { orderBy: { version: 'desc' }, select: { id: true, version: true, createdAt: true, createdById: true, priceMin: true, priceMax: true, priceStandard: true } } },
+      include: { currentVersion: true, serviceArea: true, versions: { orderBy: { version: 'desc' }, select: { id: true, version: true, createdAt: true, priceMin: true, priceMax: true, priceStandard: true } } },
     });
     if (!p) throw fail.notFound('Package');
     return p;

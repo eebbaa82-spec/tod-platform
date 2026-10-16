@@ -148,8 +148,8 @@ export class PaymentsService {
     // Receipt to both parties (FR-ESC-06).
     if (s.kind !== 'REFUND') {
       const vars = { ref: instructionRef, title: a.title, gross: formatEtb(s.gross), commission: formatEtb(s.commission), net: formatEtb(s.net) };
-      await this.notifications.notify(a.clientId, 'RECEIPT', vars, { link: `/receipts/${instructionRef}` });
-      await this.notifications.notify(a.talentId!, 'RECEIPT', vars, { link: `/receipts/${instructionRef}` });
+      await this.notifications.notify(a.clientId, 'RECEIPT', vars, { link: `/assignments/${a.id}` });
+      await this.notifications.notify(a.talentId!, 'RECEIPT', vars, { link: `/assignments/${a.id}` });
     }
 
     // Close the assignment once every milestone is settled or refunded.
