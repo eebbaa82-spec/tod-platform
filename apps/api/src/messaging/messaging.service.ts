@@ -58,6 +58,16 @@ export class MessagingService {
     const a = await this.prisma.assignment.findUnique({ where: { id: assignmentId } });
     if (!a || a.clientId !== me.id) throw fail.notFound('Assignment');
     const groups = await this.prisma.message.groupBy({ by: ['threadTalentId'], where: { assignmentId }, _count: true, _max: { createdAt: true } });
-    return groups.map((g) => ({ talentId: g.threadTalentId, count: g._count, lastAt: g._max.createdAt }));
+    // Every invited talent gets a thread, even before the first message, with their name.
+    const invited = await this.prisma.invitation.findMany({ where: { assignmentId }, select: { talentId: true } });
+    const ids = [...new Set([...invited.map((i) => i.talentId), ...groups.map((g) => g.threadTalentId), ...(a.talentId ? [a.talentId] : [])])];
+    const users = await this.prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, displayName: true, verifiedName: true } });
+    return ids
+      .map((talentId) => {
+        const g = groups.find((x) => x.threadTalentId === talentId);
+        const u = users.find((x) => x.id === talentId);
+        return { talentId, name: u?.verifiedName ?? u?.displayName ?? null, count: g?._count ?? 0, lastAt: g?._max.createdAt ?? null };
+      })
+      .sort((x, y) => (y.lastAt?.getTime() ?? 0) - (x.lastAt?.getTime() ?? 0));
   }
 }

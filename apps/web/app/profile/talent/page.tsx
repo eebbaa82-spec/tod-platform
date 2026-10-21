@@ -1,9 +1,9 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { RequireAuth } from '@/components/shell';
 import { Alert, Badge, Button, Card, Checkbox, Empty, ErrorText, Field, Input, LinkButton, PageTitle, Select, Spinner, Textarea, useAction } from '@/components/ui';
 import { FileLink, FileUploader, identityLabel, subCityOptions, TierBadge, vettingLabel } from '@/components/work-common';
-import { del, post, put } from '@/lib/api';
+import { del, post, put, upload } from '@/lib/api';
 import { useLang } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
 import { useApi } from '@/lib/use-api';
@@ -49,11 +49,73 @@ function TalentProfile() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageTitle sub={t(`Your profile is ${data.completeness}% complete.`, `መገለጫዎ ${data.completeness}% ተሟልቷል።`)}>{t('My talent profile', 'የባለሙያ መገለጫዬ')}</PageTitle>
+      <PhotoPanel p={data} reload={reload} />
       <StatusPanel p={data} reload={reload} />
       <ProfileForm p={data} reload={reload} />
       <Portfolio p={data} reload={reload} />
       <Payout p={data} reload={reload} />
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Profile photo
+// ---------------------------------------------------------------------------
+
+function initials(name: string | null | undefined) {
+  return (name ?? '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '?';
+}
+
+function PhotoPanel({ p, reload }: { p: any; reload: () => void }) {
+  const { t } = useLang();
+  const { me } = useSession();
+  const ref = useRef<HTMLInputElement>(null);
+  const { busy, error, run } = useAction();
+  const name = p.identity?.verifiedName ?? me?.verifiedName ?? me?.displayName;
+
+  const choose = (list: FileList | null) => {
+    const f = list?.[0];
+    if (ref.current) ref.current.value = '';
+    if (!f) return;
+    run(async () => {
+      if (!f.type.startsWith('image/')) throw new Error(t('Choose a PNG, JPEG or WebP photo.', 'PNG፣ JPEG ወይም WebP ፎቶ ይምረጡ።'));
+      const r = await upload(f, 'PHOTO');
+      await put('/talent/me/photo', { fileId: r.id });
+      reload();
+    });
+  };
+  const remove = () =>
+    run(async () => {
+      await put('/talent/me/photo', { fileId: null });
+      reload();
+    });
+
+  return (
+    <Card title={t('Profile photo', 'የመገለጫ ፎቶ')}>
+      <div className="flex flex-wrap items-center gap-4">
+        {p.photoFileId ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={`/api/files/${p.photoFileId}`} alt={t('Your profile photo', 'የመገለጫ ፎቶዎ')} className="size-20 rounded-full border border-stone-200 object-cover" />
+        ) : (
+          <span className="flex size-20 items-center justify-center rounded-full bg-brand-100 text-2xl font-bold text-brand-700">{initials(name)}</span>
+        )}
+        <div className="flex-1 space-y-2">
+          <p className="text-sm text-stone-600">{t('A clear photo of your face helps clients trust you. It is shown on your public profile.', 'ግልጽ የፊት ፎቶ ደንበኞች እንዲያምኑዎት ይረዳል። በይፋዊ መገለጫዎ ላይ ይታያል።')}</p>
+          <input ref={ref} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => choose(e.target.files)} />
+          <div className="flex flex-wrap gap-2">
+            <Button tone="secondary" busy={busy} onClick={() => ref.current?.click()}>
+              {p.photoFileId ? t('Change photo', 'ፎቶ ቀይር') : t('Add a photo', 'ፎቶ ያክሉ')}
+            </Button>
+            {p.photoFileId && (
+              <Button tone="ghost" busy={busy} onClick={remove}>
+                {t('Remove photo', 'ፎቶ አስወግድ')}
+              </Button>
+            )}
+          </div>
+          <ErrorText error={error} />
+        </div>
+      </div>
+    </Card>
   );
 }
 

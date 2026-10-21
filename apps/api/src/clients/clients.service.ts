@@ -65,6 +65,10 @@ export class ClientsService {
     return updated;
   }
 
+  async limits() {
+    return this.params.get<Record<string, number | null>>('ASSIGNMENT_VALUE_LIMITS');
+  }
+
   // The level used for limits: unconfirmed enterprises are treated as basic,
   // and provisional identities get the provisional limit (FR-CLI-05, FR-KYC-09).
   async effectiveLimit(clientUserId: string): Promise<{ level: ClientLevel | 'PROVISIONAL' | 'UNVERIFIED'; limit: number | null }> {

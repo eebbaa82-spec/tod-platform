@@ -203,7 +203,7 @@ export class AuthService {
       where: { id: userId },
       include: { talentProfile: { select: { id: true, vettingStatus: true, publishedAt: true, onboardingStep: true } }, clientProfile: { select: { id: true, level: true } } },
     });
-    return { ...this.publicUser(u), talentProfile: u.talentProfile, clientProfile: u.clientProfile };
+    return { ...this.publicUser(u), telegramChatId: u.telegramChatId, erasureRequestedAt: u.erasureRequestedAt, talentProfile: u.talentProfile, clientProfile: u.clientProfile };
   }
 
   publicUser(u: User) {

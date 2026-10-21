@@ -196,6 +196,8 @@ model TalentProfile {
   avgResponseMinutes Int?
   onboardingStep     Int           @default(0)
   visibility         String        @default("NORMAL") // NORMAL or REDUCED (sanctions)
+  // Photo the talent chose for their public profile. The Fayda photo is never shown publicly.
+  photoFileId        String?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
@@ -505,6 +507,10 @@ model PaymentInstruction {
   channel        String?    // BANK, TELEBIRR, CBE_BIRR
   status         String     @default("PENDING") // PENDING, CONFIRMED, FAILED, CANCELLED
   providerRef    String?
+  // How to pay, as returned by the escrow provider (FR-ESC-01).
+  instructionsEn String?
+  instructionsAm String?
+  checkoutUrl    String?
   confirmedAt    DateTime?
   createdAt      DateTime   @default(now())
 }
@@ -642,6 +648,8 @@ model Notification {
   type      String
   title     String
   body      String
+  // Template variables, so past notifications can be shown in the user's current language.
+  vars      Json?
   link      String?
   channels  String[]
   readAt    DateTime?

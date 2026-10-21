@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
-import { CurrentUser, Roles, SessionUser } from '../common/auth.decorators';
+import { CurrentUser, Public, Roles, SessionUser } from '../common/auth.decorators';
 import { ClientsService } from './clients.service';
 import { ClientProfileDto, ConfirmLevelDto } from './dto';
 
@@ -13,6 +13,13 @@ export class ClientsController {
     const profile = await this.clients.mine(me.id);
     const limit = profile ? await this.clients.effectiveLimit(me.id) : null;
     return { profile, limit };
+  }
+
+  // Value limits per client level, shown on the client profile page (BR-07, BR-08).
+  @Public()
+  @Get('limits')
+  limits() {
+    return this.clients.limits();
   }
 
   @Roles('CLIENT')

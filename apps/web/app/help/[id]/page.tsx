@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useTicketLabels } from '@/components/public-common';
 import { RequireAuth } from '@/components/shell';
 import { Alert, Badge, Button, Card, ErrorText, Field, PageTitle, Spinner, StatusBadge, Textarea, useAction } from '@/components/ui';
+import { FileUploader } from '@/components/work-common';
 import { post } from '@/lib/api';
 import { date } from '@/lib/format';
 import { useLang } from '@/lib/i18n';
@@ -24,7 +25,7 @@ interface TicketDetail {
   resolvedAt?: string | null;
   outcome?: string | null;
   createdAt: string;
-  updates: { id: string; authorId: string; body: string; at: string }[];
+  updates: { id: string; authorId: string; authorName?: string | null; mine?: boolean; body: string; at: string }[];
   files: { id: string; name: string; size: number }[];
 }
 
@@ -43,7 +44,9 @@ function Ticket() {
   const labels = useTicketLabels();
   const { data: tk, error, loading, setData } = useApi<TicketDetail>(`/support/tickets/${encodeURIComponent(id)}`);
   const [body, setBody] = useState('');
+  const [files, setFiles] = useState<{ id: string; name: string }[]>([]);
   const { busy, error: sendError, run } = useAction();
+  const statusAct = useAction();
 
   if (loading && !tk) return <Spinner />;
   if (error || !tk) return <ErrorText error={error ?? t('Request not found.', 'ጥያቄው አልተገኘም።')} />;
@@ -51,11 +54,17 @@ function Ticket() {
   const send = (e: React.FormEvent) => {
     e.preventDefault();
     run(async () => {
-      const updated = await post<TicketDetail>(`/support/tickets/${encodeURIComponent(tk.id)}`, { body: body.trim() });
+      const updated = await post<TicketDetail>(`/support/tickets/${encodeURIComponent(tk.id)}`, { body: body.trim() || undefined, fileIds: files.length ? files.map((f) => f.id) : undefined });
       setData(updated);
       setBody('');
+      setFiles([]);
     });
   };
+  const closed = tk.status === 'CLOSED' || tk.status === 'RESOLVED';
+  const setStatus = (status: 'CLOSED' | 'OPEN') =>
+    statusAct.run(async () => {
+      setData(await post<TicketDetail>(`/support/tickets/${encodeURIComponent(tk.id)}`, { status }));
+    });
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
@@ -105,11 +114,11 @@ function Ticket() {
         ) : (
           <ul className="space-y-3">
             {tk.updates.map((u) => {
-              const mine = u.authorId === me?.id;
+              const mine = u.mine ?? u.authorId === me?.id;
               return (
                 <li key={u.id} className={`rounded-lg p-3 text-sm ${mine ? 'ml-6 bg-brand-50' : 'mr-6 bg-stone-100'}`}>
                   <p className="text-xs font-semibold text-stone-600">
-                    {mine ? t('You', 'እርስዎ') : t('ToD support team', 'የቶድ ድጋፍ ቡድን')} · {date(u.at, lang, true)}
+                    {mine ? t('You', 'እርስዎ') : (u.authorName ?? t('ToD support', 'የቶድ ድጋፍ'))} · {date(u.at, lang, true)}
                   </p>
                   <p className="mt-1 whitespace-pre-line">{u.body}</p>
                 </li>
@@ -122,11 +131,26 @@ function Ticket() {
           <Field label={t('Write a reply', 'ምላሽ ይጻፉ')}>
             <Textarea rows={3} maxLength={5000} value={body} onChange={(e) => setBody(e.target.value)} />
           </Field>
+          <FileUploader purpose="TICKET" files={files} onChange={setFiles} label={t('Attach a file', 'ፋይል አያይዝ')} />
           <ErrorText error={sendError} />
-          <Button type="submit" busy={busy} disabled={!body.trim()} className="w-full sm:w-auto">
+          <Button type="submit" busy={busy} disabled={!body.trim() && !files.length} className="w-full sm:w-auto">
             {t('Send reply', 'ምላሽ ላክ')}
           </Button>
         </form>
+        {!tk.confidential && (
+          <div className="mt-4 border-t border-stone-100 pt-4">
+            {closed ? (
+              <Button tone="secondary" busy={statusAct.busy} onClick={() => setStatus('OPEN')} className="w-full sm:w-auto">
+                {t('Reopen this request', 'ይህን ጥያቄ እንደገና ክፈት')}
+              </Button>
+            ) : (
+              <Button tone="ghost" busy={statusAct.busy} onClick={() => setStatus('CLOSED')} className="w-full sm:w-auto">
+                {t('Close this request — my problem is solved', 'ይህን ጥያቄ ዝጋ — ችግሬ ተፈቷል')}
+              </Button>
+            )}
+            <ErrorText error={statusAct.error} />
+          </div>
+        )}
       </Card>
     </div>
   );

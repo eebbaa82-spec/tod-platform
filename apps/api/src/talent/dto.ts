@@ -32,3 +32,7 @@ export class PortfolioItemDto {
   @IsOptional() @IsUrl({ require_protocol: true }) url?: string;
   @IsOptional() @IsString() fileId?: string;
 }
+
+export class PhotoDto {
+  @IsOptional() @IsString() fileId?: string | null;
+}
