@@ -120,6 +120,12 @@ export class AdminController {
     return this.admin.approvals();
   }
 
+  @Get('payments')
+  @Roles('FINANCE_OFFICER', 'SUPER_ADMIN', 'PLATFORM_ADMIN', 'AUDITOR')
+  payments(@Query('status') status?: string, @Query('take') take?: string) {
+    return this.admin.payments({ status, take: take ? Number(take) : undefined });
+  }
+
   @Get('audit')
   @Roles('SUPER_ADMIN', 'PLATFORM_ADMIN', 'FINANCE_OFFICER', 'AUDITOR')
   auditLog(@Query() q: any) {

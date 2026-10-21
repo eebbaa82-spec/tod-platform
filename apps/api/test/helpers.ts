@@ -4,6 +4,7 @@ import { authenticator } from 'otplib';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { ClockService } from '../src/common/clock.service';
+import { PrismaService } from '../src/common/prisma.service';
 import { configureApp } from '../src/main';
 
 export type Api = ReturnType<typeof client>;
@@ -60,6 +61,11 @@ export async function staff(app: INestApplication, phone: string) {
   const anon = client(app);
   let r = await anon.post('/auth/login', { phone, password: 'ChangeMe-2026!' });
   if (r.next === 'MFA_SETUP') secrets.set(phone, r.mfaSetup.secret);
+  // Another spec file may already have enrolled this account; read its secret back.
+  if (!secrets.has(phone)) {
+    const u = await app.get(PrismaService).user.findUniqueOrThrow({ where: { phone } });
+    secrets.set(phone, u.mfaSecret!);
+  }
   r = await anon.post('/auth/login', { phone, password: 'ChangeMe-2026!', mfaCode: authenticator.generate(secrets.get(phone)!) });
   return { api: client(app, r.token), id: r.user.id as string };
 }

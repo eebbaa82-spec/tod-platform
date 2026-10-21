@@ -78,6 +78,7 @@ function fromTri(v: string) {
 
 function ClientForm({ profile, onSaved }: { profile: any; onSaved: () => void }) {
   const { t } = useLang();
+  const limits = useApi<Record<string, number | null>>('/clients/limits');
   const [level, setLevel] = useState<Level>(profile?.level ?? 'INDIVIDUAL');
   const [enterpriseName, setEnterpriseName] = useState(profile?.enterpriseName ?? '');
   const [tradeLicenceNo, setTradeLicenceNo] = useState(profile?.tradeLicenceNo ?? '');
@@ -122,23 +123,31 @@ function ClientForm({ profile, onSaved }: { profile: any; onSaved: () => void })
       onSaved();
     });
 
+  // Value limits per level come from ToD's parameters (santim; null means no limit).
+  const levelLimit = (v: Level, verifiedNote = false) => {
+    if (!limits.data || !(v in limits.data)) return '';
+    const n = limits.data[v];
+    if (n === null || n === undefined) return verifiedNote ? t('No limit on assignment value, once ToD checks your licence.', 'ToD ፈቃድዎን ካረጋገጠ በኋላ በሥራ ዋጋ ላይ ገደብ የለም።') : t('No limit on assignment value.', 'በሥራ ዋጋ ላይ ገደብ የለም።');
+    return verifiedNote ? t(`Each assignment up to ${etb(n)}, once ToD checks your licence.`, `ToD ፈቃድዎን ካረጋገጠ በኋላ እያንዳንዱ ሥራ እስከ ${etb(n)}።`) : t(`Each assignment up to ${etb(n)}.`, `እያንዳንዱ ሥራ እስከ ${etb(n)}።`);
+  };
+
   const levels: { v: Level; title: string; limit: string; needs: string }[] = [
     {
       v: 'VERIFIED_ENTERPRISE',
       title: t('Verified enterprise', 'የተረጋገጠ ድርጅት'),
-      limit: t('No limit on assignment value, once ToD checks your licence.', 'ToD ፈቃድዎን ካረጋገጠ በኋላ በሥራ ዋጋ ላይ ገደብ የለም።'),
+      limit: levelLimit('VERIFIED_ENTERPRISE', true),
       needs: t('Needs: business name, trade licence number, TIN (10 digits), sector, sub-city and number of staff.', 'የሚያስፈልገው፦ የንግድ ስም፣ የንግድ ፈቃድ ቁጥር፣ TIN (10 አሃዝ)፣ ዘርፍ፣ ክፍለ ከተማ እና የሠራተኞች ብዛት።'),
     },
     {
       v: 'BASIC_ENTERPRISE',
       title: t('Basic enterprise', 'መሠረታዊ ድርጅት'),
-      limit: t('Each assignment up to ETB 20,000.', 'እያንዳንዱ ሥራ እስከ 20,000 ብር።'),
+      limit: levelLimit('BASIC_ENTERPRISE'),
       needs: t('Needs: business name, and proof your business is active (a note from your association or sub-city office, or a photo or document).', 'የሚያስፈልገው፦ የንግድ ስም፣ እና ንግድዎ እየሠራ መሆኑን የሚያሳይ ማስረጃ (ከማኅበርዎ ወይም ከክፍለ ከተማ ጽ/ቤት ማስታወሻ፣ ወይም ፎቶ ወይም ሰነድ)።'),
     },
     {
       v: 'INDIVIDUAL',
       title: t('Individual', 'ግለሰብ'),
-      limit: t('Each assignment up to ETB 20,000.', 'እያንዳንዱ ሥራ እስከ 20,000 ብር።'),
+      limit: levelLimit('INDIVIDUAL'),
       needs: t('Needs: only your verified identity.', 'የሚያስፈልገው፦ የተረጋገጠ ማንነትዎ ብቻ።'),
     },
   ];
@@ -162,7 +171,7 @@ function ClientForm({ profile, onSaved }: { profile: any; onSaved: () => void })
                 <input type="radio" name="level" className="mt-1 size-5 accent-brand-600" checked={level === l.v} onChange={() => setLevel(l.v)} />
                 <span>
                   <span className="block font-semibold">{l.title}</span>
-                  <span className="block text-sm text-stone-700">{l.limit}</span>
+                  {l.limit && <span className="block text-sm text-stone-700">{l.limit}</span>}
                   <span className="block text-xs text-stone-500">{l.needs}</span>
                 </span>
               </span>

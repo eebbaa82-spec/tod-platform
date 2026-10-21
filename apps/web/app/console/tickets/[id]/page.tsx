@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { KV, Notice, useAgents } from '@/components/console-kit';
 import { CONSOLE_ROLES } from '@/components/console-nav';
 import { RequireAuth } from '@/components/shell';
+import { FileUploader } from '@/components/work-common';
 import { Alert, Badge, Button, Card, Checkbox, ErrorText, Field, PageTitle, Select, Spinner, StatusBadge, Textarea, useAction } from '@/components/ui';
 import { post } from '@/lib/api';
 import { date, humanise } from '@/lib/format';
@@ -33,7 +34,8 @@ function Ticket() {
   if (error && !tk) return <ErrorText error={error} />;
   if (!tk) return null;
 
-  const author = (uid: string) => (uid === tk.requesterId ? t('Requester', 'ጠያቂ') : name(uid));
+  const author = (u: { authorId: string; authorName?: string | null }) =>
+    u.authorId === tk.requesterId ? `${u.authorName ?? ''}${u.authorName ? ' · ' : ''}${t('Requester', 'ጠያቂ')}` : (u.authorName ?? name(u.authorId));
 
   return (
     <>
@@ -105,7 +107,7 @@ function Ticket() {
             {tk.updates.map((u: any) => (
               <li key={u.id} className={`rounded-lg border p-3 text-sm ${u.internal ? 'border-amber-300 bg-amber-50' : 'border-stone-200'}`}>
                 <p className="mb-1 text-xs text-stone-500">
-                  {author(u.authorId)} · {date(u.at, lang, true)} {u.internal && <Badge tone="amber">{t('internal', 'ውስጣዊ')}</Badge>}
+                  {author(u)} · {date(u.at, lang, true)} {u.internal && <Badge tone="amber">{t('internal', 'ውስጣዊ')}</Badge>}
                 </p>
                 <p className="whitespace-pre-wrap">{u.body}</p>
               </li>
@@ -169,15 +171,17 @@ function AddUpdate({ id, hasRequester, onDone }: { id: string; hasRequester: boo
   const { t } = useLang();
   const [body, setBody] = useState('');
   const [internal, setInternal] = useState(false);
+  const [files, setFiles] = useState<{ id: string; name: string }[]>([]);
   const a = useAction();
   return (
     <form
       className="mt-4 space-y-2 border-t border-stone-200 pt-3"
       onSubmit={async (e) => {
         e.preventDefault();
-        const r = await a.run(() => post(`/support/tickets/${id}`, { body, internal }));
+        const r = await a.run(() => post(`/support/tickets/${id}`, { body, internal, fileIds: files.length ? files.map((f) => f.id) : undefined }));
         if (r) {
           setBody('');
+          setFiles([]);
           onDone(r);
         }
       }}
@@ -185,6 +189,7 @@ function AddUpdate({ id, hasRequester, onDone }: { id: string; hasRequester: boo
       <Field label={t('Add an update', 'ማሻሻያ ጨምር')}>
         <Textarea value={body} onChange={(e) => setBody(e.target.value)} required maxLength={5000} />
       </Field>
+      <FileUploader purpose="TICKET" files={files} onChange={setFiles} label={t('Attach a file', 'ፋይል አያይዝ')} />
       <Checkbox label={t('Internal note: staff only', 'ውስጣዊ ማስታወሻ፦ ለሠራተኞች ብቻ')} checked={internal} onChange={(e) => setInternal(e.target.checked)} />
       {!internal && hasRequester && <p className="text-xs text-stone-500">{t('The requester sees this update and gets a notification.', 'ጠያቂው ይህን ያያል እና ማሳወቂያ ይደርሰዋል።')}</p>}
       <ErrorText error={a.error} />

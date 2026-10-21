@@ -146,7 +146,7 @@ function ScopeModal({ a, packages, onClose, onDone }: { a: any; packages: any[];
           e.preventDefault();
           const body =
             mode === 'package'
-              ? { packageCode: f.packageCode, ...(f.title ? { title: f.title } : {}) }
+              ? { packageCode: f.packageCode, ...(f.title ? { title: f.title } : {}), ...(f.brief.trim() ? { brief: f.brief.trim() } : {}), ...(criteria.length ? { acceptanceCriteria: criteria } : {}) }
               : { serviceAreaCode: f.serviceAreaCode, title: f.title, brief: f.brief, budgetMax: toSantim(f.budget), acceptanceCriteria: criteria };
           const r = await act.run(() => post(`/assignments/${a.id}/scope`, body));
           if (r) onDone();
@@ -169,6 +169,12 @@ function ScopeModal({ a, packages, onClose, onDone }: { a: any; packages: any[];
             {chosen && <p className="text-xs text-stone-600">{pick(chosen.currentVersion, 'scope')}</p>}
             <Field label={t('Title shown to talents (optional)', 'ለተሰጥኦዎች የሚታይ ርዕስ (አማራጭ)')}>
               <Input value={f.title} onChange={set('title')} maxLength={160} />
+            </Field>
+            <Field label={t('Brief', 'መግለጫ')} hint={t("Starts with the client's words. Edit to make it clear for talents.", 'በደንበኛው ቃል ይጀምራል። ለተሰጥኦዎች ግልጽ እንዲሆን ያስተካክሉት።')}>
+              <Textarea value={f.brief} onChange={set('brief')} maxLength={4000} />
+            </Field>
+            <Field label={t('Additional acceptance criteria, one per line (optional)', 'ተጨማሪ የመቀበያ መስፈርቶች፣ በየመስመሩ አንድ (አማራጭ)')} hint={t("Kept on top of the package's own checklist and added to the brief.", 'ከጥቅሉ የራሱ ማረጋገጫ ዝርዝር በተጨማሪ ይያዛሉ፣ በመግለጫውም ላይ ይጨመራሉ።')}>
+              <Textarea value={f.criteria} onChange={set('criteria')} />
             </Field>
           </>
         ) : (

@@ -27,8 +27,18 @@ export class AdminService {
 
   // ---------------------------------------------------------------- users
 
-  async users(q: { text?: string; role?: string; status?: string; identity?: string; take?: number }) {
+  // Display names for a set of user ids, so console lists show people, not ids.
+  private async names(ids: (string | null | undefined)[]) {
+    const unique = [...new Set(ids.filter((x): x is string => !!x))];
+    if (!unique.length) return new Map<string, string>();
+    const rows = await this.prisma.user.findMany({ where: { id: { in: unique } }, select: { id: true, displayName: true, verifiedName: true } });
+    return new Map(rows.map((u) => [u.id, u.verifiedName ?? u.displayName]));
+  }
+
+  async users(q: { text?: string; role?: string; status?: string; identity?: string; vetting?: string; levelToConfirm?: string; take?: number }) {
     const where: Prisma.UserWhereInput = {
+      ...(q.vetting ? { talentProfile: { vettingStatus: q.vetting as any } } : {}),
+      ...(q.levelToConfirm === 'true' ? { clientProfile: { level: 'VERIFIED_ENTERPRISE', levelConfirmedAt: null } } : {}),
       ...(q.role ? { roles: { has: q.role as Role } } : {}),
       ...(q.status ? { status: q.status as any } : {}),
       ...(q.identity ? { identityStatus: q.identity as any } : {}),
@@ -167,7 +177,10 @@ export class AdminService {
   async parameters() {
     const rows = await this.prisma.parameter.findMany({ orderBy: { key: 'asc' } });
     const pending = await this.prisma.parameterChange.findMany({ where: { status: 'PENDING' }, orderBy: { requestedAt: 'desc' } });
-    return { parameters: rows, pending };
+    const history = await this.prisma.parameterChange.findMany({ where: { status: { not: 'PENDING' } }, orderBy: { requestedAt: 'desc' }, take: 50 });
+    const names = await this.names([...pending, ...history].flatMap((c) => [c.requestedById, c.decidedById]));
+    const named = (c: (typeof pending)[number]) => ({ ...c, requestedByName: names.get(c.requestedById) ?? null, decidedByName: c.decidedById ? (names.get(c.decidedById) ?? null) : null });
+    return { parameters: rows, pending: pending.map(named), history: history.map(named) };
   }
 
   // FR-ADM-02: every change records who, when, old and new value; financial
@@ -214,7 +227,23 @@ export class AdminService {
       this.prisma.approval.findMany({ where: { status: 'PENDING' }, orderBy: { requestedAt: 'asc' } }),
     ]);
     const disputes = await this.prisma.dispute.findMany({ where: { id: { in: decisions.map((d) => d.subjectId) } }, select: { id: true, ref: true, amountDisputed: true, assignment: { select: { ref: true, title: true } } } });
-    return { parameterChanges: params, disputeDecisions: decisions.map((d) => ({ ...d, dispute: disputes.find((x) => x.id === d.subjectId) })) };
+    const names = await this.names([...params.map((p) => p.requestedById), ...decisions.map((d) => d.requestedById)]);
+    return {
+      parameterChanges: params.map((p) => ({ ...p, requestedByName: names.get(p.requestedById) ?? null })),
+      disputeDecisions: decisions.map((d) => ({ ...d, requestedByName: names.get(d.requestedById) ?? null, dispute: disputes.find((x) => x.id === d.subjectId) })),
+    };
+  }
+
+  // Payment instructions for finance: what clients have been asked to pay into escrow.
+  async payments(q: { status?: string; take?: number }) {
+    const rows = await this.prisma.paymentInstruction.findMany({
+      where: q.status ? { status: q.status } : {},
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(q.take ?? 100, 500),
+      include: { assignment: { select: { id: true, ref: true, title: true, clientId: true, status: true } } },
+    });
+    const names = await this.names(rows.map((r) => r.assignment.clientId));
+    return rows.map((r) => ({ ...r, clientName: names.get(r.assignment.clientId) ?? null }));
   }
 
   // ---------------------------------------------------------------- audit
@@ -231,7 +260,8 @@ export class AdminService {
       orderBy: { id: 'desc' },
       take: Math.min(q.take ?? 200, 1000),
     });
-    return rows.map((r) => ({ ...r, id: r.id.toString() }));
+    const names = await this.names(rows.map((r) => r.actorId));
+    return rows.map((r) => ({ ...r, id: r.id.toString(), actorName: r.actorId ? (names.get(r.actorId) ?? null) : null }));
   }
 
   // Overview counts for the console home page, with oldest-item ageing (FR-ADM-06).

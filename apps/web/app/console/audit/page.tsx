@@ -108,7 +108,7 @@ function Audit() {
                   </span>,
                   r.actorId ? (
                     <button key="ac" type="button" className="font-mono text-xs text-brand-700 underline" title={r.actorId} onClick={() => { const n = { ...blank, actorId: r.actorId }; setDraft(n); setF(n); }}>
-                      {shortId(r.actorId)}
+                      {r.actorName ?? shortId(r.actorId)}
                     </button>
                   ) : (
                     <span key="ac" className="text-xs text-stone-500">{t('system', 'ሥርዓት')}</span>

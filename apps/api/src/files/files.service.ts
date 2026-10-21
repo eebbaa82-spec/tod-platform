@@ -78,6 +78,24 @@ export class FilesService {
     return { meta: f, data: await this.storage.get(f.storageKey) };
   }
 
+  // Files anyone may open without signing in: portfolio items and the profile
+  // photo of a published talent. Identity (Fayda) photos are never public.
+  async publicDownload(id: string) {
+    const f = await this.prisma.fileObject.findUnique({ where: { id } });
+    if (!f || !f.linkedId || !['PORTFOLIO', 'PROFILE_PHOTO'].includes(f.linkedType ?? '')) throw fail.notFound('File');
+    const profile = await this.prisma.talentProfile.findUnique({ where: { id: f.linkedId }, include: { user: { select: { status: true } } } });
+    if (!profile?.publishedAt || profile.user.status !== 'ACTIVE') throw fail.notFound('File');
+    if (f.linkedType === 'PROFILE_PHOTO' && profile.photoFileId !== f.id) throw fail.notFound('File');
+    return { meta: f, data: await this.storage.get(f.storageKey) };
+  }
+
+  // Names and types for a list of file ids, for showing links.
+  async describe(ids: string[]) {
+    if (!ids.length) return [];
+    const rows = await this.prisma.fileObject.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, mime: true, size: true } });
+    return ids.map((id) => rows.find((r) => r.id === id)).filter((r): r is NonNullable<typeof r> => !!r);
+  }
+
   private async canRead(me: SessionUser, f: { ownerId: string; linkedType: string | null; linkedId: string | null; purpose: string }) {
     if (f.ownerId === me.id) return true;
     if (f.linkedType === 'PORTFOLIO') return true; // portfolio items are public
@@ -86,7 +104,20 @@ export class FilesService {
       if (a && (a.clientId === me.id || a.talentId === me.id)) return true;
       if (hasRole(me, 'SUPPORT_AGENT', 'PLATFORM_ADMIN', 'SUPER_ADMIN', 'FINANCE_OFFICER', 'AUDITOR')) return true;
     }
-    if (f.linkedType === 'TICKET') return hasRole(me, 'SUPPORT_AGENT', 'PLATFORM_ADMIN', 'SUPER_ADMIN');
+    if (f.linkedType === 'PROFILE_PHOTO') return true;
+    if ((f.linkedType === 'DISPUTE' || f.linkedType === 'DISPUTE_INTERNAL') && f.linkedId) {
+      const staff = hasRole(me, 'SUPPORT_AGENT', 'PLATFORM_ADMIN', 'SUPER_ADMIN', 'FINANCE_OFFICER', 'AUDITOR');
+      if (staff) return true;
+      if (f.linkedType === 'DISPUTE_INTERNAL') return false;
+      const d = await this.prisma.dispute.findUnique({ where: { id: f.linkedId }, include: { assignment: true } });
+      return !!d && (d.assignment.clientId === me.id || d.assignment.talentId === me.id);
+    }
+    if (f.linkedType === 'TICKET' && f.linkedId) {
+      const t = await this.prisma.ticket.findUnique({ where: { id: f.linkedId } });
+      if (t && t.requesterId === me.id) return true;
+      if (t?.confidential) return hasRole(me, 'SUPPORT_AGENT', 'PLATFORM_ADMIN', 'SUPER_ADMIN') && (await this.prisma.user.findUnique({ where: { id: me.id } }))?.safeguardingDesignated === true;
+      return hasRole(me, 'SUPPORT_AGENT', 'PLATFORM_ADMIN', 'SUPER_ADMIN');
+    }
     if (f.linkedType === 'CLIENT_PROFILE') return hasRole(me, 'SUPPORT_AGENT', 'PLATFORM_ADMIN', 'SUPER_ADMIN', 'AUDITOR');
     return isStaff(me.roles) && hasRole(me, 'PLATFORM_ADMIN', 'SUPER_ADMIN');
   }
