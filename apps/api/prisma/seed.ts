@@ -5,7 +5,8 @@ import { PARAMETER_DEFAULTS } from '../src/common/parameters';
 
 const prisma = new PrismaClient();
 
-// Demo staff for development only. Never seed these in production.
+// Demo staff with a shared, published password: local development and tests only.
+// Never on a server people can reach, staging included (use admin:create there).
 const STAFF: { phone: string; name: string; roles: Role[]; safeguarding?: boolean }[] = [
   { phone: '+251911000001', name: 'Super Admin', roles: ['SUPER_ADMIN'] },
   { phone: '+251911000002', name: 'Platform Admin', roles: ['PLATFORM_ADMIN'] },
@@ -32,7 +33,7 @@ async function main() {
     });
     await prisma.package.update({ where: { id: pkg.id }, data: { currentVersionId: v.id } });
   }
-  if (process.env.APP_ENV !== 'production') {
+  if (['development', 'test'].includes(process.env.APP_ENV ?? 'development')) {
     const hash = await bcrypt.hash('ChangeMe-2026!', 10);
     for (const s of STAFF) {
       await prisma.user.upsert({
