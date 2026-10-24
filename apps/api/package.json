@@ -11,7 +11,9 @@
     "db:seed": "ts-node prisma/seed.ts",
     "test": "jest --runInBand",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test:e2e": "jest --runInBand test/e2e"
+    "test:e2e": "jest --runInBand test/e2e",
+    "admin:create": "ts-node --transpile-only prisma/create-admin.ts",
+    "db:demo": "ts-node --transpile-only prisma/demo.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.2.7",

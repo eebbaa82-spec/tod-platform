@@ -1,0 +1,15 @@
+# Caddy terminates TLS (a free certificate is fetched automatically when
+# SITE_ADDRESS is a domain name pointing at this server) and routes /api to
+# the API and everything else to the web app.
+{$SITE_ADDRESS::80} {
+	encode gzip
+	request_body {
+		max_size 25MB
+	}
+	handle /api/* {
+		reverse_proxy api:4000
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+}

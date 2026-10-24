@@ -60,8 +60,9 @@ you scale out.
 
 ## Deployment notes
 
-Hosting must be in Ethiopia (NFR-PRV-02). Run the API and web app as two
+Hosting must be in Ethiopia (NFR-PRV-02). The API and web app run as two
 Node processes behind a reverse proxy that terminates TLS and forwards
-`/api` to the API. Replace `LocalDiskStorage` and `NoScanner` in
+`/api` to the API; `deploy/compose.yaml` sets this up with Docker, see
+[DEPLOYMENT.md](DEPLOYMENT.md). Replace `LocalDiskStorage` and `NoScanner` in
 `files/storage.ts` with the chosen object store and a malware scanner. Back
 up PostgreSQL daily; financial records are kept for ten years.

@@ -1,0 +1,82 @@
+# Runs the whole platform on one server: docker compose --env-file .env up -d
+# See docs/DEPLOYMENT.md.
+name: tod
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tod
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: tod
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tod -d tod"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build: { context: .., target: api }
+    image: tod-api
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      DATABASE_URL: postgresql://tod:${POSTGRES_PASSWORD}@db:5432/tod
+      APP_ENV: ${APP_ENV:?set APP_ENV in .env}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?set FIELD_ENCRYPTION_KEY in .env}
+      WEB_ORIGIN: ${WEB_ORIGIN:?set WEB_ORIGIN in .env}
+      SMS_PROVIDER: ${SMS_PROVIDER:-console}
+      AFROMESSAGE_TOKEN: ${AFROMESSAGE_TOKEN:-}
+      AFROMESSAGE_SENDER: ${AFROMESSAGE_SENDER:-}
+    volumes:
+      - uploads:/data/storage
+
+  web:
+    build: { context: .., target: web }
+    image: tod-web
+    restart: unless-stopped
+    depends_on: [api]
+
+  proxy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [web, api]
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+
+  # Daily compressed database dump to ./backups, keeping the last 30.
+  # Copy this folder off the server as well (see docs/DEPLOYMENT.md).
+  backup:
+    image: postgres:16
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./backups:/backups
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while true; do
+          f=/backups/tod-$$(date +%Y%m%d-%H%M).sql.gz
+          pg_dump -h db -U tod tod | gzip > "$$f.tmp" && mv "$$f.tmp" "$$f" && echo "backup $$f"
+          ls -1t /backups/tod-*.sql.gz | tail -n +31 | xargs -r rm --
+          sleep 86400
+        done
+
+volumes:
+  db-data:
+  uploads:
+  caddy-data:

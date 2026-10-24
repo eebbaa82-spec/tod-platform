@@ -14,7 +14,8 @@ production. See [docs/DEVELOPER-INTEGRATION.md](docs/DEVELOPER-INTEGRATION.md).
 | --- | --- |
 | `apps/api` | NestJS 11 API, Prisma 6, PostgreSQL 16 |
 | `apps/web` | Next.js 16 web app, English and Amharic, phone-first |
-| `docs/` | [Integration guide](docs/DEVELOPER-INTEGRATION.md), [architecture](docs/ARCHITECTURE.md), [requirement coverage](docs/REQUIREMENTS-COVERAGE.md) |
+| `deploy/` | Docker Compose setup for a server, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+| `docs/` | [Deployment](docs/DEPLOYMENT.md), [integration guide](docs/DEVELOPER-INTEGRATION.md), [architecture](docs/ARCHITECTURE.md), [requirement coverage](docs/REQUIREMENTS-COVERAGE.md) |
 
 ## Run it locally
 
@@ -31,12 +32,13 @@ createdb -O tod tod_test
 cp apps/api/.env.example apps/api/.env
 npm run db:deploy -w apps/api   # apply migrations
 npm run db:seed -w apps/api     # service areas, 14 packages, parameters, demo staff
+npm run db:demo -w apps/api     # optional: demo talents, businesses and assignments
 
 npm run dev:api                 # http://localhost:4000/api
 npm run dev:web                 # http://localhost:3000
 ```
 
-Demo staff accounts (development only): phones `+251911000001` to
+Demo staff accounts (local development and tests only, never on a server): phones `+251911000001` to
 `+251911000006` (super admin, platform admin, support agent, vetting officer,
 finance officer, MEL officer), password `ChangeMe-2026!`. The first sign-in
 shows a secret to add to an authenticator app.

@@ -27,7 +27,7 @@ import { TalentModule } from './talent/talent.module';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
-    ThrottlerModule.forRoot({ throttlers: [{ ttl: 60_000, limit: 300 }], skipIf: () => process.env.APP_ENV === 'test' }),
+    ThrottlerModule.forRoot({ throttlers: [{ ttl: 60_000, limit: 300 }], skipIf: () => process.env.APP_ENV === 'test' || process.env.THROTTLE_DISABLED === 'true' }),
     CoreModule,
     NotificationsModule,
     IntegrationsModule,
