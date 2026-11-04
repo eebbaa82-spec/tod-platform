@@ -70,7 +70,7 @@ function Login() {
 
   return (
     <div className="mx-auto max-w-md">
-      <PageTitle sub={t('Welcome back to Talent on Demand.', 'እንኳን ወደ ቶድ በደህና ተመለሱ።')}>{t('Sign in', 'ይግቡ')}</PageTitle>
+      <PageTitle sub={t('Welcome back to Talent on Demand.', 'እንኳን ወደ ለሰሪው በደህና ተመለሱ።')}>{t('Sign in', 'ይግቡ')}</PageTitle>
       <Card>
         <form onSubmit={submit} className="space-y-4">
           {step === 'CREDENTIALS' && (
@@ -133,7 +133,7 @@ function Login() {
           {t('Forgot password or PIN?', 'የይለፍ ቃል ወይም ፒን ረሱ?')}
         </Link>
         <p className="text-stone-600">
-          {t('New to ToD?', 'ለቶድ አዲስ ነዎት?')}{' '}
+          {t('New to ToD?', 'አዲስ ተጠቃሚ ነዎት?')}{' '}
           <Link href="/register" className="py-2 font-semibold text-brand-700 hover:underline">
             {t('Create an account', 'መለያ ይፍጠሩ')}
           </Link>

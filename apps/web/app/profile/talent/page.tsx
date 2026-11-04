@@ -166,7 +166,7 @@ function StatusPanel({ p, reload }: { p: any; reload: () => void }) {
           {p.identity?.masked && <p className="text-stone-600">{p.identity.masked}</p>}
           {!idOk && idStatus !== 'PENDING' && (
             <>
-              <Checkbox checked={idConsent} onChange={(e) => setIdConsent(e.target.checked)} label={t('I agree that ToD asks its partner bank to confirm that I hold an active account in my name, and that the bank shares my name, sex and date of birth with ToD.', 'ToD በስሜ ንቁ የባንክ ሂሳብ እንዳለኝ ከአጋር ባንኩ እንዲያረጋግጥ፣ ባንኩም ስሜን፣ ጾታዬንና የትውልድ ቀኔን ለToD እንዲያጋራ እስማማለሁ።')} />
+              <Checkbox checked={idConsent} onChange={(e) => setIdConsent(e.target.checked)} label={t('I agree that ToD asks its partner bank to confirm that I hold an active account in my name, and that the bank shares my name, sex and date of birth with ToD.', 'ለሰሪው በስሜ ንቁ የባንክ ሂሳብ እንዳለኝ ከአጋር ባንኩ እንዲያረጋግጥ፣ ባንኩም ስሜን፣ ጾታዬንና የትውልድ ቀኔን ከለሰሪው ጋር እንዲያጋራ እስማማለሁ።')} />
               <Button onClick={startIdentity} busy={idAct.busy} disabled={!idConsent} className="w-full">
                 {t('Verify my identity through my bank', 'ማንነቴን በባንኬ በኩል አረጋግጥ')}
               </Button>
@@ -388,7 +388,7 @@ function ProfileForm({ p, reload }: { p: any; reload: () => void }) {
         <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
           <p className="font-semibold text-sky-900">{t('Optional and private questions', 'አማራጭ እና ሚስጥራዊ ጥያቄዎች')}</p>
           <p className="mt-1 text-sm text-sky-900">
-            {t('You do not have to answer. Your answers are never shown on your profile or to clients. They help us make sure ToD reaches everyone, and a confirmed disability can give you a lower commission.', 'መመለስ ግዴታ አይደለም። መልሶችዎ በመገለጫዎ ላይ ወይም ለደንበኞች ፈጽሞ አይታዩም። ToD ሁሉንም እንዲደርስ ይረዱናል፣ የተረጋገጠ የአካል ጉዳትም ዝቅተኛ ኮሚሽን ሊያስገኝልዎ ይችላል።')}
+            {t('You do not have to answer. Your answers are never shown on your profile or to clients. They help us make sure ToD reaches everyone, and a confirmed disability can give you a lower commission.', 'መመለስ ግዴታ አይደለም። መልሶችዎ በመገለጫዎ ላይ ወይም ለደንበኞች ፈጽሞ አይታዩም። ለሰሪው ሁሉንም እንዲደርስ ይረዱናል፣ የተረጋገጠ የአካል ጉዳትም ዝቅተኛ ኮሚሽን ሊያስገኝልዎ ይችላል።')}
           </p>
           <div className="mt-3 space-y-3">
             <Field label={t('Do you have a disability?', 'የአካል ጉዳት አለብዎት?')}>
@@ -404,7 +404,7 @@ function ProfileForm({ p, reload }: { p: any; reload: () => void }) {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={t('How did you hear about ToD?', 'ስለ ToD እንዴት ሰሙ?')}>
+          <Field label={t('How did you hear about ToD?', 'ስለ ለሰሪው እንዴት ሰሙ?')}>
             <Select
               value={channel}
               onChange={(e) => setChannel(e.target.value)}

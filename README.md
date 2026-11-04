@@ -1,4 +1,6 @@
-# Talent on Demand platform
+# Talent on Demand (ለሰሪው) platform
+
+*ሥራ - ለሰሪው!* Served at leseriw.com.
 
 Marketplace for the Talent on Demand (ToD) pilot in Addis Ababa: vetted young
 talents deliver standard service packages to micro and small enterprises, and

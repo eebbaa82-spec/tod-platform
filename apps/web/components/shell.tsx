@@ -34,8 +34,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-40 border-b border-stone-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4">
           <Link href={me ? (isStaff ? '/console' : '/dashboard') : '/'} className="flex items-center gap-2 font-bold text-brand-700">
-            <span className="grid size-8 place-items-center rounded-lg bg-brand-600 text-sm text-white">ToD</span>
-            <span className="hidden sm:inline">Talent on Demand</span>
+            <span className="grid size-8 place-items-center rounded-lg bg-brand-600 text-sm text-white" aria-hidden="true">{t('ToD', 'ለ')}</span>
+            <span className={lang === 'am' ? 'text-lg' : 'hidden sm:inline'}>{t('Talent on Demand', 'ለሰሪው')}</span>
           </Link>
           <nav className="ml-4 hidden gap-1 md:flex">
             {links.map((l) => (

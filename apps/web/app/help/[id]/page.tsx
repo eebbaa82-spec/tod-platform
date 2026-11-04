@@ -118,7 +118,7 @@ function Ticket() {
               return (
                 <li key={u.id} className={`rounded-lg p-3 text-sm ${mine ? 'ml-6 bg-brand-50' : 'mr-6 bg-stone-100'}`}>
                   <p className="text-xs font-semibold text-stone-600">
-                    {mine ? t('You', 'እርስዎ') : (u.authorName ?? t('ToD support', 'የቶድ ድጋፍ'))} · {date(u.at, lang, true)}
+                    {mine ? t('You', 'እርስዎ') : (u.authorName ?? t('ToD support', 'የለሰሪው ድጋፍ'))} · {date(u.at, lang, true)}
                   </p>
                   <p className="mt-1 whitespace-pre-line">{u.body}</p>
                 </li>

@@ -3,8 +3,8 @@ import './globals.css';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  title: 'Talent on Demand',
-  description: 'Vetted young talent for small businesses in Addis Ababa, paid safely through bank-held escrow.',
+  title: 'Talent on Demand · ለሰሪው',
+  description: 'ሥራ - ለሰሪው! Vetted young talent for small businesses in Addis Ababa, paid safely through bank-held escrow.',
 };
 
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#18714a' };
