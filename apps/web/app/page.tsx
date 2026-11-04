@@ -48,7 +48,7 @@ export default function Home() {
       <section className="rounded-2xl bg-brand-700 px-5 py-8 text-white sm:px-10 sm:py-12">
         {lang === 'am' && <p className="mb-3 text-lg font-semibold text-brand-50 sm:text-xl">ሥራ - ለሰሪው!</p>}
         <h1 className="text-2xl font-bold leading-tight sm:text-4xl">
-          {t('Get work done by vetted young talent in Addis Ababa', 'በአዲስ አበባ በተመረመሩ ወጣት ባለሙያዎች ሥራዎን ያሠሩ')}
+          {t('Get work done by vetted young talent in Addis Ababa', 'በአዲስ አበባ ማንነታቸው በተረጋገጡ ወጣት ባለሙያዎች ሥራዎን ያሠሩ')}
         </h1>
         <p className="mt-3 max-w-2xl text-base text-brand-50 sm:text-lg">
           {t(
