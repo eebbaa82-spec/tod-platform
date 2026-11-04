@@ -16,8 +16,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!me) return;
-    get<{ unreadCount: number }>('/notifications?unread=1').then((r) => setUnread(r.unreadCount ?? 0)).catch(() => {});
-  }, [me, path]);
+    get<{ unreadCount: number }>(`/notifications?unread=1&lang=${lang}`).then((r) => setUnread(r.unreadCount ?? 0)).catch(() => {});
+  }, [me, path, lang]);
   useEffect(() => setMenu(false), [path]);
 
   const links: { href: string; label: string }[] = [];

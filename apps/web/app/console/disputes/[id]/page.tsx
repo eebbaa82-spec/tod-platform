@@ -144,14 +144,14 @@ function Dispute() {
             {d.notes.map((n: any) => (
               <li key={n.id} className={`rounded-lg border p-3 text-sm ${n.internal ? 'border-amber-300 bg-amber-50' : 'border-stone-200'}`}>
                 <p className="mb-1 text-xs text-stone-500">
-                  {n.authorRole === 'STAFF' ? name(n.authorId) : humanise(n.authorRole)} · {date(n.at, lang, true)} {n.internal && <Badge tone="amber">{t('internal: staff only', 'ውስጣዊ፦ ለሠራተኞች ብቻ')}</Badge>}
+                  {n.authorName ?? (n.authorRole === 'STAFF' ? name(n.authorId) : shortId(n.authorId))} · {humanise(n.authorRole)} · {date(n.at, lang, true)} {n.internal && <Badge tone="amber">{t('internal: staff only', 'ውስጣዊ፦ ለሠራተኞች ብቻ')}</Badge>}
                 </p>
                 <p className="whitespace-pre-wrap">{n.body}</p>
                 {n.fileIds?.length > 0 && (
                   <p className="mt-1 flex flex-wrap gap-2 text-xs">
                     {n.fileIds.map((f: string) => (
                       <a key={f} className="text-brand-700 underline" href={`/api/files/${f}`}>
-                        {t('File', 'ፋይል')} {shortId(f)}
+                        {n.files?.find((x: any) => x.id === f)?.name ?? `${t('File', 'ፋይል')} ${shortId(f)}`}
                       </a>
                     ))}
                   </p>

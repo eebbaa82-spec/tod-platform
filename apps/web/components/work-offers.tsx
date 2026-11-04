@@ -22,6 +22,27 @@ export function CommissionNote() {
   );
 }
 
+// The commission that would apply to this talent, worked out on an amount (FR-PAY transparency).
+export function CommissionPreview({ preview, amount }: { preview?: { rate: number; rule: string } | null; amount?: number | null }) {
+  const { t } = useLang();
+  if (!preview || !amount || amount <= 0) return null;
+  const rate = Number(preview.rate);
+  const pct = Math.round(rate * 1000) / 10;
+  const net = amount - Math.round(amount * rate);
+  const why =
+    preview.rule === 'INCLUSIVE_WOMEN'
+      ? t('You get the lower inclusive rate as a verified woman.', 'እንደ ተረጋገጠች ሴት ዝቅተኛውን የአካታችነት መጠን ያገኛሉ።')
+      : preview.rule === 'INCLUSIVE_DISABILITY'
+        ? t('You get the lower inclusive rate because your disability is confirmed.', 'የአካል ጉዳትዎ ስለተረጋገጠ ዝቅተኛውን የአካታችነት መጠን ያገኛሉ።')
+        : null;
+  return (
+    <div className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-900">
+      <p>{t(`Commission: ${pct}% — you would receive ${etb(net)} of ${etb(amount)}.`, `ኮሚሽን፦ ${pct}% — ከ${etb(amount)} ውስጥ ${etb(net)} ይቀበላሉ።`)}</p>
+      {why && <p className="text-xs">{why}</p>}
+    </div>
+  );
+}
+
 function proposalStatusBadge(status: string, t: T) {
   switch (status) {
     case 'SUBMITTED':
@@ -76,6 +97,7 @@ export function InvitedPanel({ a, reload }: { a: any; reload: () => void }) {
             {proposalStatusBadge(mine.status, t)}
           </div>
           {mine.message && <p className="whitespace-pre-wrap text-stone-700">{mine.message}</p>}
+          {['SUBMITTED', 'COUNTERED'].includes(mine.status) && <CommissionPreview preview={a.commissionPreview} amount={mine.status === 'COUNTERED' && mine.counterAmount ? mine.counterAmount : mine.amount} />}
           {mine.status === 'REJECTED' && mine.rejectReason && <p className="text-stone-600">{t('Reason', 'ምክንያት')}: {mine.rejectReason}</p>}
           {mine.status === 'COUNTERED' && mine.counterAmount && (
             <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
@@ -129,6 +151,7 @@ export function InvitedPanel({ a, reload }: { a: any; reload: () => void }) {
         ) : a.budgetMax ? (
           <p>{t(`The client's budget is up to ${etb(a.budgetMax)}.`, `የደንበኛው በጀት እስከ ${etb(a.budgetMax)} ነው።`)}</p>
         ) : null}
+        <CommissionPreview preview={a.commissionPreview} amount={mode === 'propose' && amountSantim > 0 ? amountSantim : (pv?.priceStandard ?? a.budgetMax)} />
 
         {mode === 'none' && (
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">

@@ -22,7 +22,7 @@ function Parameters() {
   const { t, lang } = useLang();
   const { has, me } = useSession();
   const edit = has(...CONSOLE_ROLES.parametersEdit);
-  const { data, error, loading, reload } = useApi<{ parameters: any[]; pending: any[] }>('/admin/parameters');
+  const { data, error, loading, reload } = useApi<{ parameters: any[]; pending: any[]; history?: any[] }>('/admin/parameters');
   const [category, setCategory] = useState('');
   const [text, setText] = useState('');
   const [editing, setEditing] = useState<any>(null);
@@ -73,13 +73,38 @@ function Parameters() {
                   <p className="font-medium text-amber-900">{t('Pending change, waiting for a second approver', 'በሁለተኛ አጽዳቂ የሚጠብቅ ለውጥ')}</p>
                   <JsonBlock value={c.newValue} max="max-h-32" />
                   <p className="mt-1 text-xs">
-                    {c.reason} · {c.requestedById === me?.id ? t('requested by you', 'በእርስዎ የተጠየቀ') : shortId(c.requestedById)} · {date(c.requestedAt, lang, true)}
+                    {c.reason} · {c.requestedById === me?.id ? t('requested by you', 'በእርስዎ የተጠየቀ') : (c.requestedByName ?? shortId(c.requestedById))} · {date(c.requestedAt, lang, true)}
                   </p>
                 </div>
               ))}
             </Card>
           ))}
         </div>
+        {(data?.history?.length ?? 0) > 0 && (
+          <Card title={t('Recent decided changes', 'በቅርቡ የተወሰኑ ለውጦች')}>
+            <ul className="divide-y divide-stone-100">
+              {data!.history!.map((c) => (
+                <li key={c.id} className="py-2 text-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="break-all font-mono font-semibold">{c.key}</span>
+                    <Badge tone={c.status === 'APPLIED' ? 'green' : 'red'}>{c.status === 'APPLIED' ? t('applied', 'ተተግብሯል') : t('rejected', 'ውድቅ ሆኗል')}</Badge>
+                  </div>
+                  <p className="text-stone-700">{c.reason}</p>
+                  <p className="text-xs text-stone-500">
+                    {t('Requested by', 'የጠየቀው')} {c.requestedByName ?? shortId(c.requestedById)} · {date(c.requestedAt, lang, true)}
+                    {c.decidedById && (
+                      <>
+                        {' · '}
+                        {t('decided by', 'የወሰነው')} {c.decidedByName ?? shortId(c.decidedById)}
+                        {c.decidedAt ? ` · ${date(c.decidedAt, lang, true)}` : ''}
+                      </>
+                    )}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
       </div>
       {editing && (
         <ChangeModal

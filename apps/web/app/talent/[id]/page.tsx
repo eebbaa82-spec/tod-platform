@@ -4,12 +4,12 @@ import { TrustBadge, useTierLabel } from '@/components/public-common';
 import { Badge, Card, Empty, ErrorText, Spinner } from '@/components/ui';
 import { date } from '@/lib/format';
 import { useLang } from '@/lib/i18n';
-import { useSession } from '@/lib/session';
 import { useApi } from '@/lib/use-api';
 
 interface PublicTalent {
   userId: string;
   name: string;
+  photoFileId?: string | null;
   verified: boolean;
   provisional: boolean;
   identityMasked?: string | null;
@@ -34,7 +34,6 @@ interface PublicTalent {
 export default function TalentProfilePage() {
   const { id } = useParams<{ id: string }>();
   const { t, pick, lang } = useLang();
-  const { me } = useSession();
   const tierLabel = useTierLabel();
   const { data: p, error, loading } = useApi<PublicTalent>(`/talent/${encodeURIComponent(id)}`);
 
@@ -56,9 +55,14 @@ export default function TalentProfilePage() {
     <div className="space-y-4">
       <Card>
         <div className="flex items-start gap-4">
-          <div className="grid size-16 shrink-0 place-items-center rounded-full bg-brand-100 text-xl font-bold text-brand-700" aria-hidden>
-            {initials}
-          </div>
+          {p.photoFileId ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={`/api/files/public/${p.photoFileId}`} alt={p.name} className="size-16 shrink-0 rounded-full border border-stone-200 object-cover" />
+          ) : (
+            <div className="grid size-16 shrink-0 place-items-center rounded-full bg-brand-100 text-xl font-bold text-brand-700" aria-hidden>
+              {initials}
+            </div>
+          )}
           <div className="min-w-0 flex-1">
             <h1 className="text-xl font-bold sm:text-2xl">{p.name}</h1>
             {p.headline && <p className="text-stone-700">{p.headline}</p>}
@@ -109,14 +113,11 @@ export default function TalentProfilePage() {
                           {t('Open link', 'ሊንኩን ክፈት')}
                         </a>
                       )}
-                      {item.fileId &&
-                        (me ? (
-                          <a href={`/api/files/${item.fileId}`} className="inline-block py-1 font-semibold text-brand-700 underline">
-                            {t('Download file', 'ፋይሉን አውርድ')}
-                          </a>
-                        ) : (
-                          <span className="py-1 text-stone-500">{t('Sign in to see the file', 'ፋይሉን ለማየት ይግቡ')}</span>
-                        ))}
+                      {item.fileId && (
+                        <a href={`/api/files/public/${item.fileId}`} target="_blank" rel="noopener noreferrer" className="inline-block py-1 font-semibold text-brand-700 underline">
+                          {t('Open file', 'ፋይሉን ክፈት')}
+                        </a>
+                      )}
                     </div>
                   </li>
                 ))}

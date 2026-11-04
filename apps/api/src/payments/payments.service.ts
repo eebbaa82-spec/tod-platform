@@ -51,13 +51,17 @@ export class PaymentsService {
       amount: instruction.amount,
       payer: await this.party(assignment.clientId),
     });
+    const saved = await this.prisma.paymentInstruction.update({
+      where: { id: instruction.id },
+      data: { instructionsEn: res?.instructionsEn ?? null, instructionsAm: res?.instructionsAm ?? null, checkoutUrl: res?.checkoutUrl ?? null },
+    });
     await this.notifications.notify(
       assignment.clientId,
       'PAYMENT_INSTRUCTION',
       { amount: formatEtb(instruction.amount), title: assignment.title, reference },
       { sms: true, link: `/assignments/${assignment.id}` },
     );
-    return { ...instruction, instructionsEn: res?.instructionsEn, instructionsAm: res?.instructionsAm, checkoutUrl: res?.checkoutUrl };
+    return saved;
   }
 
   // Release a milestone to the talent, net of commission (FR-ESC-05, FR-ESC-06).

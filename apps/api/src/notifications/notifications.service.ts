@@ -35,7 +35,7 @@ export class NotificationsService {
       channels.push('EMAIL');
     }
     await this.prisma.notification.create({
-      data: { userId, type, title, body, link: opts.link, channels },
+      data: { userId, type, title, body, vars, link: opts.link, channels },
     });
   }
 

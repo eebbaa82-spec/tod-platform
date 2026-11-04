@@ -38,7 +38,7 @@ function useRoleLabel() {
 }
 
 function Summary() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const { me } = useSession();
   const roleLabel = useRoleLabel();
   if (!me) return null;
@@ -61,7 +61,13 @@ function Summary() {
           }
         />
         <Row label={t('Account status', 'የመለያ ሁኔታ')} value={<StatusBadge status={me.status} />} />
+        {me.telegramChatId && <Row label={t('Telegram chat ID', 'የቴሌግራም ቻት መለያ')} value={<span className="font-mono">{me.telegramChatId}</span>} />}
       </dl>
+      {me.erasureRequestedAt && (
+        <div className="mt-3">
+          <Alert tone="warning">{t(`You asked us to erase your data on ${date(me.erasureRequestedAt, lang)}. Our team is handling it.`, `መረጃዎ እንዲሰረዝ በ${date(me.erasureRequestedAt, lang)} ጠይቀዋል። ቡድናችን እያስተናገደው ነው።`)}</Alert>
+        </div>
+      )}
     </Card>
   );
 }
@@ -220,8 +226,11 @@ function Preferences() {
           </Field>
         )}
         {channels.includes('TELEGRAM') && (
-          <Field label={t('Telegram chat ID', 'የቴሌግራም ቻት መለያ')} hint={t('Leave empty to keep the one you saved before.', 'ቀድሞ ያስቀመጡትን ለማቆየት ባዶ ይተዉት።')}>
-            <Input inputMode="numeric" value={telegram} onChange={(e) => setTelegram(e.target.value)} />
+          <Field
+            label={t('Telegram chat ID', 'የቴሌግራም ቻት መለያ')}
+            hint={me?.telegramChatId ? t(`Saved now: ${me.telegramChatId}. Leave empty to keep it.`, `አሁን የተቀመጠው፦ ${me.telegramChatId}። ለማቆየት ባዶ ይተዉት።`) : t('Leave empty to keep the one you saved before.', 'ቀድሞ ያስቀመጡትን ለማቆየት ባዶ ይተዉት።')}
+          >
+            <Input inputMode="numeric" value={telegram} onChange={(e) => setTelegram(e.target.value)} placeholder={me?.telegramChatId ?? ''} />
           </Field>
         )}
         <ErrorText error={error} />
@@ -236,7 +245,7 @@ function Preferences() {
 
 function MyData() {
   const { t, lang } = useLang();
-  const { logout } = useSession();
+  const { me, logout, refresh } = useSession();
   const exp = useAction();
   const deact = useAction();
   const erase = useAction();
@@ -270,7 +279,9 @@ function MyData() {
     erase.run(async () => {
       const r = await post<{ requestedAt: string; ticket?: string }>('/me/erasure', reason.trim() ? { reason: reason.trim() } : {});
       setErased(r);
+      refresh();
     });
+  const erasedAt = erased?.requestedAt ?? me?.erasureRequestedAt ?? null;
 
   return (
     <Card title={t('My data', 'የእኔ መረጃ')}>
@@ -301,11 +312,11 @@ function MyData() {
               'የመሰረዝ ጥያቄዎችን ቡድናችን ያስተናግዳል። የክፍያና የፋይናንስ መዝገቦች ሕጉና ደጋፊዎቻችን ለሚጠይቁት ጊዜ ይቆያሉ፣ ከዚያ ይሰረዛሉ።',
             )}
           </p>
-          {erased ? (
+          {erasedAt ? (
             <div className="mt-2">
               <Alert tone="success">
-                {t('Request received on', 'ጥያቄው የደረሰው በ')} {date(erased.requestedAt, lang)}
-                {erased.ticket ? ` · ${t('Reference', 'መለያ ቁጥር')} ${erased.ticket}` : ''}
+                {t('Request received on', 'ጥያቄው የደረሰው በ')} {date(erasedAt, lang)}
+                {erased?.ticket ? ` · ${t('Reference', 'መለያ ቁጥር')} ${erased.ticket}` : ''}
               </Alert>
             </div>
           ) : (
@@ -329,7 +340,7 @@ function MyData() {
         </div>
       </Modal>
 
-      <Modal open={eraseOpen && !erased} onClose={() => setEraseOpen(false)} title={t('Request erasure', 'መሰረዝ ጠይቅ')}>
+      <Modal open={eraseOpen && !erasedAt} onClose={() => setEraseOpen(false)} title={t('Request erasure', 'መሰረዝ ጠይቅ')}>
         <div className="space-y-3">
           <Field label={t('Why? (optional)', 'ለምን? (አማራጭ)')}>
             <Textarea maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} />

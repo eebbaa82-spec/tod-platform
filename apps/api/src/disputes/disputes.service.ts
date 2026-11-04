@@ -5,6 +5,7 @@ import { ClockService } from '../common/clock.service';
 import { fail } from '../common/errors';
 import { formatEtb } from '../common/money';
 import { ParametersService } from '../common/parameters.service';
+import { FilesService } from '../files/files.service';
 import { PrismaService } from '../common/prisma.service';
 import { SequenceService } from '../common/sequence.service';
 import { addWorkingDays } from '../common/working-days';
@@ -41,6 +42,7 @@ export class DisputesService {
     private readonly payments: PaymentsService,
     private readonly escrow: EscrowGateway,
     private readonly clock: ClockService,
+    private readonly files: FilesService,
   ) {}
 
   private staffCan(me: SessionUser) {
@@ -118,9 +120,17 @@ export class DisputesService {
     if (!staff && !party) throw fail.notFound('Dispute');
     const limits = await this.limits(d.createdAt);
     const approval = d.approvalId ? await this.prisma.approval.findUnique({ where: { id: d.approvalId } }) : null;
+    const notes = staff ? d.notes : d.notes.filter((n) => !n.internal);
+    const fileInfo = await this.files.describe(notes.flatMap((n) => n.fileIds));
+    const authors = await this.prisma.user.findMany({ where: { id: { in: [...new Set(notes.map((n) => n.authorId))] } }, select: { id: true, displayName: true, verifiedName: true } });
     return {
       ...d,
-      notes: staff ? d.notes : d.notes.filter((n) => !n.internal),
+      notes: notes.map((n) => {
+        const a = authors.find((u) => u.id === n.authorId);
+        // Parties see staff as "ToD case officer"; staff see names.
+        const authorName = n.authorRole === 'STAFF' && !staff ? null : (a?.verifiedName ?? a?.displayName ?? null);
+        return { ...n, authorName, files: n.fileIds.map((fid) => fileInfo.find((f) => f.id === fid)).filter(Boolean) };
+      }),
       evidence: d.evidence,
       limits,
       approval: staff ? approval : approval ? { status: approval.status } : null,
@@ -160,7 +170,10 @@ export class DisputesService {
     const role = d.assignment.clientId === me.id ? 'CLIENT' : d.assignment.talentId === me.id ? 'TALENT' : staff ? 'STAFF' : null;
     if (!role) throw fail.notFound('Dispute');
     if (d.stage === 'CLOSED') throw fail.conflict('DISPUTE_CLOSED', 'This case is closed.');
-    const note = await this.prisma.disputeNote.create({ data: { disputeId: id, authorId: me.id, authorRole: role, internal: staff && internal, body, fileIds } });
+    const isInternal = role === 'STAFF' && internal;
+    // Linking lets the other party (or only staff, for internal notes) open the files.
+    if (fileIds.length) await this.files.link(me.id, fileIds, isInternal ? 'DISPUTE_INTERNAL' : 'DISPUTE', id);
+    const note = await this.prisma.disputeNote.create({ data: { disputeId: id, authorId: me.id, authorRole: role, internal: isInternal, body, fileIds } });
     await this.audit.log({ actorId: me.id, action: 'DISPUTE_NOTE', entityType: 'Dispute', entityId: id, after: { role, internal: note.internal } });
     return note;
   }

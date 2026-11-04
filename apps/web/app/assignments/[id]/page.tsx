@@ -161,7 +161,8 @@ function PaymentPanel({ a, accepted }: { a: any; accepted: any }) {
   if (!pay) {
     return <Alert tone="info">{t('Your payment details are being prepared. Refresh this page in a moment.', 'የክፍያ ዝርዝሮችዎ እየተዘጋጁ ነው። ትንሽ ቆይተው ገጹን ያድሱ።')}</Alert>;
   }
-  const instructions = lang === 'am' ? accepted?.instructionsAm ?? accepted?.instructionsEn : accepted?.instructionsEn;
+  // Instructions are saved with the payment, so they show again after a reload.
+  const instructions = lang === 'am' ? pay.instructionsAm ?? pay.instructionsEn : pay.instructionsEn;
   return (
     <Card title={t('Next step: pay into escrow', 'ቀጣይ ደረጃ፦ ለአጋር ባንኩ ይክፈሉ')}>
       <div className="space-y-3 text-sm">
@@ -177,8 +178,8 @@ function PaymentPanel({ a, accepted }: { a: any; accepted: any }) {
           </div>
         </div>
         {instructions && <p className="whitespace-pre-wrap rounded-lg border border-stone-200 p-3">{instructions}</p>}
-        {accepted?.checkoutUrl && (
-          <a href={accepted.checkoutUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white sm:w-auto">
+        {pay.checkoutUrl && pay.status === 'PENDING' && (
+          <a href={pay.checkoutUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white sm:w-auto">
             {t('Pay online', 'በመስመር ላይ ይክፈሉ')}
           </a>
         )}

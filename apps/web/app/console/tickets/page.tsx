@@ -84,6 +84,7 @@ function Tickets() {
           )}
         </Card>
         <LogTicket onDone={(r) => { setOk(t(`Ticket ${r.ref} logged.`, `ትኬት ${r.ref} ተመዝግቧል።`)); reload(); }} />
+        {designated && <LogConfidential onDone={(r) => { setOk(t(`Confidential case ${r.ref} logged. You are its owner.`, `ሚስጥራዊ ጉዳይ ${r.ref} ተመዝግቧል። ባለቤቱ እርስዎ ነዎት።`)); reload(); }} />}
       </div>
     </>
   );
@@ -129,10 +130,64 @@ function LogTicket({ onDone }: { onDone: (r: any) => void }) {
         <Field label={t('Assignment id (optional)', 'የሥራ መለያ (አማራጭ)')}>
           <Input value={f.assignmentId} onChange={set('assignmentId')} />
         </Field>
-        <p className="text-xs text-stone-500">{t('You become the owner of tickets you log. For harassment, exploitation, discrimination or fraud, do not log it here: tell a designated staff member, or help the person use "Report a concern" in the app so it stays confidential.', 'የሚመዘግቡት ትኬት ባለቤት እርስዎ ይሆናሉ። ለትንኮሳ ወይም ለማጭበርበር "ስጋት ሪፖርት አድርግ" ይጠቀሙ።')}</p>
+        <p className="text-xs text-stone-500">{t('You become the owner of tickets you log. For harassment, exploitation, discrimination or fraud, do not log it here: a designated staff member logs it as a confidential report, or help the person use "Report a concern" in the app so it stays confidential.', 'የሚመዘግቡት ትኬት ባለቤት እርስዎ ይሆናሉ። ለትንኮሳ፣ ለብዝበዛ፣ ለመድልዎ ወይም ለማጭበርበር እዚህ አይመዝግቡ፦ የተመደበ ሠራተኛ እንደ ሚስጥራዊ ሪፖርት ይመዘግበዋል፣ ወይም ሰውየው በመተግበሪያው "ስጋት ሪፖርት አድርግ" እንዲጠቀም ያግዙት።')}</p>
         <ErrorText error={a.error} />
         <Button type="submit" busy={a.busy}>
           {t('Log ticket', 'መዝግብ')}
+        </Button>
+      </form>
+    </Card>
+  );
+}
+
+// Designated safeguarding staff log a confidential report for someone who called or came to the desk.
+function LogConfidential({ onDone }: { onDone: (r: any) => void }) {
+  const { t } = useLang();
+  const blank = { type: 'HARASSMENT', source: 'CALL_LINE', requesterPhone: '', description: '' };
+  const [f, setF] = useState(blank);
+  const a = useAction();
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
+  return (
+    <Card title={t('Log a confidential report for a caller', 'ለደዋይ ሚስጥራዊ ሪፖርት መዝግብ')}>
+      <form
+        className="space-y-3"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const body = { type: f.type, source: f.source, description: f.description, ...(f.requesterPhone.trim() ? { requesterPhone: f.requesterPhone.trim() } : {}) };
+          const r = await a.run(() => post('/support/reports', body));
+          if (r) {
+            setF(blank);
+            onDone(r);
+          }
+        }}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Field label={t('What happened', 'የተከሰተው')}>
+            <Select
+              value={f.type}
+              onChange={set('type')}
+              options={[
+                { value: 'HARASSMENT', label: t('Harassment', 'ትንኮሳ') },
+                { value: 'EXPLOITATION', label: t('Exploitation', 'ብዝበዛ') },
+                { value: 'DISCRIMINATION', label: t('Discrimination', 'መድልዎ') },
+                { value: 'FRAUD', label: t('Fraud or scam', 'ማጭበርበር') },
+              ]}
+            />
+          </Field>
+          <Field label={t('Source', 'ምንጭ')}>
+            <Select value={f.source} onChange={set('source')} options={[{ value: 'CALL_LINE', label: t('Call line', 'የስልክ መስመር') }, { value: 'ASSISTED_DESK', label: t('Assisted desk', 'የእገዛ ዴስክ') }]} />
+          </Field>
+          <Field label={t("Caller's phone (optional)", 'የደዋዩ ስልክ (አማራጭ)')} hint={t('Links the case to their account if one exists.', 'መለያ ካለ ጉዳዩን ከመለያቸው ጋር ያገናኛል።')}>
+            <Input type="tel" value={f.requesterPhone} onChange={set('requesterPhone')} placeholder="09…" />
+          </Field>
+        </div>
+        <Field label={t('What the person said', 'ሰውየው የተናገረው')}>
+          <Textarea value={f.description} onChange={set('description')} required minLength={5} maxLength={5000} />
+        </Field>
+        <p className="text-xs text-stone-500">{t('Only designated safeguarding staff can see this case. You become its owner.', 'ይህን ጉዳይ የሚያዩት የተመደቡ የጥበቃ ሠራተኞች ብቻ ናቸው። ባለቤቱ እርስዎ ይሆናሉ።')}</p>
+        <ErrorText error={a.error} />
+        <Button type="submit" tone="danger" busy={a.busy} disabled={f.description.trim().length < 5}>
+          {t('Log confidential report', 'ሚስጥራዊ ሪፖርት መዝግብ')}
         </Button>
       </form>
     </Card>

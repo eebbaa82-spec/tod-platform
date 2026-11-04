@@ -5,7 +5,7 @@ import { Suspense, useState } from 'react';
 import { FilterBar, qs, ROLE_OPTIONS } from '@/components/console-kit';
 import { CONSOLE_ROLES } from '@/components/console-nav';
 import { RequireAuth } from '@/components/shell';
-import { Badge, Button, Card, ErrorText, Field, Input, PageTitle, Select, Spinner, StatusBadge, Table } from '@/components/ui';
+import { Badge, Button, Card, Checkbox, ErrorText, Field, Input, PageTitle, Select, Spinner, StatusBadge, Table } from '@/components/ui';
 import { shortDate } from '@/lib/format';
 import { useLang } from '@/lib/i18n';
 import { useApi } from '@/lib/use-api';
@@ -23,7 +23,7 @@ export default function UsersPage() {
 function Users() {
   const { t } = useLang();
   const sp = useSearchParams();
-  const [draft, setDraft] = useState({ text: sp.get('text') ?? '', role: sp.get('role') ?? '', status: sp.get('status') ?? '', identity: sp.get('identity') ?? '' });
+  const [draft, setDraft] = useState({ text: sp.get('text') ?? '', role: sp.get('role') ?? '', status: sp.get('status') ?? '', identity: sp.get('identity') ?? '', vetting: sp.get('vetting') ?? '', levelToConfirm: sp.get('levelToConfirm') ?? '' });
   const [applied, setApplied] = useState(draft);
   const { data, error, loading } = useApi<any[]>(`/admin/users${qs(applied)}`);
   const set = (k: keyof typeof draft) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setDraft({ ...draft, [k]: e.target.value });
@@ -45,6 +45,23 @@ function Users() {
           <Field label={t('Identity', 'ማንነት')}>
             <Select value={draft.identity} onChange={set('identity')} options={[{ value: '', label: t('Any', 'ማንኛውም') }, ...['UNVERIFIED', 'PENDING', 'PROVISIONAL', 'VERIFIED', 'FAILED'].map((s) => ({ value: s, label: s.toLowerCase() }))]} />
           </Field>
+          <Field label={t('Talent vetting', 'የባለሙያ ምዘና')}>
+            {/* Mirrors enum VettingStatus in apps/api/prisma/schema.prisma. */}
+            <Select
+              value={draft.vetting}
+              onChange={set('vetting')}
+              options={[
+                { value: '', label: t('Any', 'ማንኛውም') },
+                { value: 'NOT_STARTED', label: t('Not started', 'ያልተጀመረ') },
+                { value: 'IN_PROGRESS', label: t('In progress', 'በሂደት ላይ') },
+                { value: 'APPROVED', label: t('Approved', 'የጸደቀ') },
+                { value: 'REJECTED', label: t('Rejected', 'ውድቅ የተደረገ') },
+              ]}
+            />
+          </Field>
+          <div className="flex items-end">
+            <Checkbox label={t('Enterprise level to confirm', 'የሚረጋገጥ የድርጅት ደረጃ')} checked={draft.levelToConfirm === 'true'} onChange={(e) => setDraft({ ...draft, levelToConfirm: e.target.checked ? 'true' : '' })} />
+          </div>
           <div className="sm:col-span-2 lg:col-span-4">
             <Button type="submit">{t('Search', 'ፈልግ')}</Button>
           </div>

@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLang } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
-import { useDevStatus } from './console-kit';
 
 // Roles on each section mirror the @Roles on the API routes the page reads.
 export const CONSOLE_ROLES = {
@@ -24,14 +23,14 @@ export const CONSOLE_ROLES = {
   reportsExport: ['MEL_OFFICER', 'PLATFORM_ADMIN', 'SUPER_ADMIN', 'AUDITOR'],
   audit: ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'FINANCE_OFFICER', 'AUDITOR'],
   auditVerify: ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'AUDITOR'],
-  funding: ['FINANCE_OFFICER', 'SUPER_ADMIN'],
+  funding: ['FINANCE_OFFICER', 'SUPER_ADMIN', 'PLATFORM_ADMIN', 'AUDITOR'],
+  fundingConfirm: ['FINANCE_OFFICER', 'SUPER_ADMIN'],
 } as const;
 
 export function ConsoleNav() {
   const { t } = useLang();
   const { has } = useSession();
   const path = usePathname();
-  const dev = useDevStatus();
   const can = (k: keyof typeof CONSOLE_ROLES) => has(...CONSOLE_ROLES[k]);
 
   const items: { href: string; label: string; show: boolean }[] = [
@@ -47,7 +46,7 @@ export function ConsoleNav() {
     { href: '/console/reports', label: t('Reports', 'ሪፖርቶች'), show: can('reports') },
     { href: '/console/audit', label: t('Audit log', 'የኦዲት መዝገብ'), show: can('audit') },
     { href: '/console/staff', label: t('Staff and announcements', 'ሠራተኞች እና ማስታወቂያዎች'), show: can('staff') },
-    { href: '/console/funding', label: t('Funding (test)', 'ክፍያ (ሙከራ)'), show: can('funding') && dev.enabled },
+    { href: '/console/funding', label: t('Funding', 'ክፍያ'), show: can('funding') },
   ];
 
   const active = (href: string) => {
