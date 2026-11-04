@@ -200,6 +200,12 @@ These are on by default and are changed in Console, Parameters:
   approves it (Console, Pilot groups).
 * `GESI_TARGETS` and `GESI_FLAGS` hold the Inception Report targets used by
   the GESI report.
+* `PAY_LATER_ENABLED` is `false`. Pay-later needs the signed lender's adapter
+  first (the test lender refuses to start in production). Then confirm
+  `PAY_LATER_LIMITS` with the lender, mark the pilot groups that may use it
+  (with an optional group cap), switch it on for each business in Console,
+  Pay-later, and give the lender a `LENDER_VIEWER` staff account for its
+  read-only view.
 
 ## Useful commands
 

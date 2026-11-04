@@ -27,6 +27,8 @@ export const CONSOLE_ROLES = {
   fundingConfirm: ['FINANCE_OFFICER', 'SUPER_ADMIN'],
   interim: ['FINANCE_OFFICER', 'AUDITOR', 'SUPER_ADMIN'],
   cohorts: ['PLATFORM_ADMIN', 'SUPER_ADMIN', 'SUPPORT_AGENT', 'FINANCE_OFFICER', 'MEL_OFFICER', 'AUDITOR'],
+  payLater: ['FINANCE_OFFICER', 'SUPER_ADMIN', 'PLATFORM_ADMIN', 'AUDITOR', 'LENDER_VIEWER'],
+  payLaterManage: ['FINANCE_OFFICER', 'SUPER_ADMIN'],
 } as const;
 
 export function ConsoleNav() {
@@ -51,6 +53,7 @@ export function ConsoleNav() {
     { href: '/console/funding', label: t('Funding', 'ክፍያ'), show: can('funding') },
     { href: '/console/interim', label: t('Interim payouts', 'ጊዜያዊ ክፍያዎች'), show: can('interim') },
     { href: '/console/cohorts', label: t('Pilot groups', 'የሙከራ ቡድኖች'), show: can('cohorts') },
+    { href: '/console/pay-later', label: t('Pay-later', 'የበኋላ ክፍያ'), show: can('payLater') },
   ];
 
   const active = (href: string) => {

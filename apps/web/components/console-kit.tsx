@@ -168,6 +168,6 @@ export function FilterBar({ children, onSubmit }: { children: React.ReactNode; o
 
 export const birrValue = (santim: number | null | undefined) => (santim === null || santim === undefined ? '' : String(santim / 100));
 
-export const ROLE_OPTIONS = ['TALENT', 'CLIENT', 'VETTING_OFFICER', 'SUPPORT_AGENT', 'FINANCE_OFFICER', 'MEL_OFFICER', 'PLATFORM_ADMIN', 'SUPER_ADMIN', 'AUDITOR', 'PARTNER_VIEWER'];
+export const ROLE_OPTIONS = ['TALENT', 'CLIENT', 'VETTING_OFFICER', 'SUPPORT_AGENT', 'FINANCE_OFFICER', 'MEL_OFFICER', 'PLATFORM_ADMIN', 'SUPER_ADMIN', 'AUDITOR', 'PARTNER_VIEWER', 'LENDER_VIEWER'];
 export const STAFF_ROLE_OPTIONS = ROLE_OPTIONS.slice(2);
 export const roleLabel = (r: string) => r.replace(/_/g, ' ').toLowerCase();

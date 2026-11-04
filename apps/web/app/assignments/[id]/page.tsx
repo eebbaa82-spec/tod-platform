@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { PayLaterPanel } from '@/components/pay-later';
 import { ReportConcern } from '@/components/report-concern';
 import { RequireAuth } from '@/components/shell';
 import { Alert, Badge, Button, Card, ErrorText, Field, Modal, PageTitle, Spinner, StatusBadge, Textarea, useAction } from '@/components/ui';
@@ -63,6 +64,7 @@ function Workspace() {
       )}
       {role === 'CLIENT' && a.status === 'OPEN' && <ClientProposals a={a} reload={reload} onAccepted={setPayment} onMessage={openThread} />}
       {role === 'CLIENT' && a.status === 'AGREED' && <PaymentPanel a={a} accepted={payment} />}
+      {role === 'CLIENT' && !['REQUESTED', 'OPEN', 'CANCELLED'].includes(a.status) && <PayLaterPanel a={a} reload={reload} />}
 
       <CancelPanel a={a} reload={reload} />
       {role !== 'INVITED_TALENT' && <Milestones a={a} reload={reload} />}
