@@ -30,7 +30,7 @@ interface PackageRow {
 }
 
 export default function Home() {
-  const { t, pick } = useLang();
+  const { t, pick, lang } = useLang();
   const { me, isStaff } = useSession();
   const tierLabel = useTierLabel();
   const [area, setArea] = useState('');
@@ -46,7 +46,7 @@ export default function Home() {
   return (
     <div className="space-y-10">
       <section className="rounded-2xl bg-brand-700 px-5 py-8 text-white sm:px-10 sm:py-12">
-        <p className="mb-3 text-lg font-semibold text-brand-50 sm:text-xl">ሥራ - ለሰሪው!</p>
+        {lang === 'am' && <p className="mb-3 text-lg font-semibold text-brand-50 sm:text-xl">ሥራ - ለሰሪው!</p>}
         <h1 className="text-2xl font-bold leading-tight sm:text-4xl">
           {t('Get work done by vetted young talent in Addis Ababa', 'በአዲስ አበባ በተመረመሩ ወጣት ባለሙያዎች ሥራዎን ያሠሩ')}
         </h1>
