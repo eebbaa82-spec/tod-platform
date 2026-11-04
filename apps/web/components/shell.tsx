@@ -34,7 +34,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-40 border-b border-stone-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4">
           <Link href={me ? (isStaff ? '/console' : '/dashboard') : '/'} className="flex items-center gap-2 font-bold text-brand-700">
-            <span className="grid size-8 place-items-center rounded-lg bg-brand-600 text-sm text-white" aria-hidden="true">{t('ToD', 'ሥለ')}</span>
+            {/* The English and Amharic marks side by side, in the same design. */}
+            <span className="flex gap-1" aria-hidden="true">
+              <span className="grid size-8 place-items-center rounded-lg bg-brand-600 text-sm text-white">ToD</span>
+              <span className="grid size-8 place-items-center rounded-lg bg-brand-600 text-sm text-white">ሥለ</span>
+            </span>
             <span className={lang === 'am' ? 'text-lg' : 'hidden sm:inline'}>{t('Talent on Demand', 'ለሰሪው')}</span>
           </Link>
           <nav className="ml-4 hidden gap-1 md:flex">
