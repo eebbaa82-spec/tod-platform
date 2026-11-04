@@ -26,6 +26,7 @@ enum Role {
   SUPER_ADMIN
   AUDITOR
   PARTNER_VIEWER
+  LENDER_VIEWER // read-only view of the lender's own pay-later portfolio (FR-BNP-10)
 }
 
 enum AccountStatus {
@@ -270,6 +271,10 @@ model ClientProfile {
   referralDetail     String?
   levelConfirmedAt   DateTime?
   levelConfirmedById String?
+  // Pay-later (FR-BNP-01, FR-BNP-04): per-client switch, and the limit for the
+  // next cycle once stepped up after a repayment (null uses the first-cycle limit).
+  payLaterEnabled    Boolean     @default(false)
+  payLaterLimit      Int?
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 }
@@ -389,6 +394,7 @@ model Assignment {
   disputes     Dispute[]
   ratings      Rating[]
   payments     PaymentInstruction[]
+  payLater     PayLaterAgreement[]
 
   @@index([clientId])
   @@index([talentId])
@@ -754,6 +760,8 @@ model Cohort {
   // Highest assignment value for members, in santim; null leaves the client-level limit.
   valueLimit       Int?
   payLaterEligible Boolean   @default(false)
+  // Highest pay-later balance for the whole cohort, in santim (FR-BNP-04); null for no cohort cap.
+  payLaterCap      Int?
   status           String    @default("PROPOSED") // PROPOSED, APPROVED, CLOSED
   createdById      String
   approvedById     String?
@@ -815,4 +823,108 @@ model FileObject {
 model Sequence {
   name  String @id
   value Int    @default(0)
+}
+
+// ---------------------------------------------------------------------------
+// Buy now, pay later (FR-BNP-01 to FR-BNP-13). ToD passes the application to
+// the lender and records the lender's decision; the lender makes every credit
+// decision. The facility funds escrow once the client acknowledges the debt.
+// ---------------------------------------------------------------------------
+
+model PayLaterAgreement {
+  id                  String     @id @default(cuid())
+  ref                 String     @unique
+  clientId            String
+  assignmentId        String
+  assignment          Assignment @relation(fields: [assignmentId], references: [id])
+  amount              Int
+  tenorDays           Int
+  purpose             String
+  // AWAITING_REASSESSMENT, SUBMITTED, APPROVED, DECLINED, ACTIVE, REPAID, DEFAULTED, CANCELLED
+  status              String     @default("SUBMITTED")
+  cycle               Int        @default(1)
+  // The data passed to the lender (FR-BNP-03), as sent.
+  application         Json
+  lender              String
+  lenderRef           String?
+  lenderReason        String?
+  decidedAt           DateTime?
+  // Affordability reassessment before repeat use (FR-BNP-13).
+  reassessment        Json?
+  acknowledgedAt      DateTime?
+  acknowledgementText String?
+  acknowledgementIp   String?
+  drawdownRef         String?
+  disbursed           Int        @default(0)
+  repaid              Int        @default(0)
+  defaultedAt         DateTime?
+  closedAt            DateTime?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  installments PayLaterInstallment[]
+  repayments   PayLaterRepayment[]
+  exceptions   PayLaterException[]
+
+  @@index([clientId])
+  @@index([assignmentId])
+  @@index([status])
+}
+
+// One instalment per accepted milestone, due tenorDays after acceptance (FR-BNP-05).
+model PayLaterInstallment {
+  id            String            @id @default(cuid())
+  agreementId   String
+  agreement     PayLaterAgreement @relation(fields: [agreementId], references: [id])
+  milestoneId   String            @unique
+  amount        Int
+  paid          Int               @default(0)
+  dueOn         DateTime
+  // Reminder stages already sent (FR-BNP-07): BEFORE, DUE, LATE_1, LATE_8, LATE_31.
+  remindersSent String[]          @default([])
+  paidAt        DateTime?
+  createdAt     DateTime          @default(now())
+
+  @@index([dueOn])
+}
+
+model PayLaterRepayment {
+  id           String            @id @default(cuid())
+  agreementId  String
+  agreement    PayLaterAgreement @relation(fields: [agreementId], references: [id])
+  amount       Int
+  reference    String            @unique
+  paidOn       DateTime
+  note         String?
+  recordedById String
+  createdAt    DateTime          @default(now())
+}
+
+// A negotiated repayment or other exception to policy, with approver and reason (FR-BNP-13).
+model PayLaterException {
+  id            String            @id @default(cuid())
+  agreementId   String
+  agreement     PayLaterAgreement @relation(fields: [agreementId], references: [id])
+  kind          String // RESCHEDULE or OTHER
+  installmentId String?
+  newDueOn      DateTime?
+  reason        String
+  requestedById String
+  requestedAt   DateTime          @default(now())
+  status        String            @default("PENDING") // PENDING, APPROVED, REJECTED
+  decidedById   String?
+  decidedAt     DateTime?
+  note          String?
+}
+
+// Portfolio events (FR-BNP-11): a freeze when arrears pass the trigger, and
+// its lifting. Flagged events go into the next weekly snapshot to SNV.
+model PayLaterPortfolioEvent {
+  id                 String   @id @default(cuid())
+  kind               String // FREEZE, UNFREEZE
+  arrearsShare       Float
+  detail             Json
+  actorId            String?
+  flaggedForSnapshot Boolean  @default(true)
+  createdAt          DateTime @default(now())
 }

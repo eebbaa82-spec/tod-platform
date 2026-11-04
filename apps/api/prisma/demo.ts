@@ -100,7 +100,7 @@ async function main() {
     const [coffee, boutique, electronics] = clients;
 
     // Everyone in the demo belongs to an approved pilot cohort (FR-ADM-07).
-    const cohort = await staffCall('POST', '/admin/cohorts', { name: 'Demo pilot cohort', description: 'Demonstration accounts', valueLimit: null });
+    const cohort = await staffCall('POST', '/admin/cohorts', { name: 'Demo pilot cohort', description: 'Demonstration accounts', valueLimit: null, payLaterEligible: true, payLaterCap: 20_000_000 });
     await staffCall('POST', `/admin/cohorts/${cohort.id}/members`, { add: [...Object.values(talents).map((t) => t.id), ...clients.map((c) => c.id)] });
     await staffCall('POST', `/admin/cohorts/${cohort.id}/approve`, { note: 'Demo data' });
 
@@ -141,6 +141,28 @@ async function main() {
       await talent.call('POST', `/ratings/assignments/${assignment.id}`, { scores: { clarityOfBrief: 5, responsiveness: 5, conduct: 5 } });
     }
 
+    // Pay-later with the test lender (FR-BNP): switched on for the coffee house and the boutique.
+    await prisma.parameter.update({ where: { key: 'PAY_LATER_ENABLED' }, data: { value: true } });
+    app.get(ParametersService).invalidate();
+    await staffCall('PUT', `/paylater/clients/${coffee.id}`, { enabled: true });
+    await staffCall('PUT', `/paylater/clients/${boutique.id}`, { enabled: true });
+    const agreed = async (client: { call: Call }, area: string, packageCode: string, brief: string) => {
+      const talent = talents[area];
+      const a = await client.call('POST', '/assignments', { packageCode, brief });
+      await talent.call('POST', `/assignments/${a.id}/respond`, { action: 'ACCEPT_PRICE', message: 'Happy to help with this.' });
+      const full = await client.call('GET', `/assignments/${a.id}`);
+      const proposal = full.proposals.find((p: any) => p.talentId === talent.id);
+      await client.call('POST', `/assignments/proposals/${proposal.id}/accept`, {});
+      return { talent, id: a.id as string };
+    };
+    // 6: paid with pay-later; the work is accepted and part of it already repaid.
+    const campaign = await agreed(coffee, 'DIGITAL_MKT', 'MKT-CAMPAIGN', 'A two-week campaign for our new breakfast menu.');
+    const plCoffee = await coffee.call('POST', '/paylater/applications', { assignmentId: campaign.id, tenorDays: 45, purpose: 'Bring customers in for the new breakfast menu' });
+    await coffee.call('POST', `/paylater/agreements/${plCoffee.id}/acknowledge`, { password: PASSWORD });
+    const campaignMilestone = await deliver(campaign.talent, await coffee.call('GET', `/assignments/${campaign.id}`));
+    await coffee.call('POST', `/assignments/milestones/${campaignMilestone}/accept`, { password: PASSWORD });
+    await fin('POST', `/paylater/agreements/${plCoffee.id}/repayments`, { amount: 2_000_00, reference: 'LND-DEMO-0001', note: 'First part paid at the branch' });
+
     await prisma.parameter.update({ where: { key: 'ESCROW_MODE' }, data: { value: modeParam.value as any } });
     app.get(ParametersService).invalidate();
 
@@ -151,12 +173,16 @@ async function main() {
     // 4: funded and in progress.
     await funded(electronics, 'WEB_IT', 'WEB-SITE', 'A simple website listing our products and location.');
 
+    // 7: agreed and waiting for payment; the boutique can pay into escrow or ask to pay later.
+    await agreed(boutique, 'DIGITAL_MKT', 'MKT-CAMPAIGN', 'Promote the new season collection on social media.');
+
     // 5: open, the talent has an invitation to answer.
     await boutique.call('POST', '/assignments', { packageCode: 'DES-PRINT', brief: 'A price list and flyer for the new season.' });
 
     console.log('Demo data loaded. Every demo account uses the password Demo-2026!');
     console.log('Talents:  0920000101 to 0920000106 (Hanna, Meron, Dawit, Selamawit, Yonas, Liya)');
     console.log('Clients:  0920000201 Abeba Coffee House, 0920000202 Piassa Fashion Boutique, 0920000203 Merkato Electronics');
+    console.log('Pay-later (test lender) is on for the coffee house and the boutique.');
   } finally {
     await app.close();
   }

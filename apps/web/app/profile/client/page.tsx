@@ -50,7 +50,7 @@ function LimitPanel({ profile, limit }: { profile: any; limit: { level: string; 
         </p>
         <p className="flex flex-wrap items-center gap-2">
           {t('Business level', 'የንግድ ደረጃ')}: <Badge tone="blue">{levelName(profile.level, t)}</Badge>
-          {profile.level === 'VERIFIED_ENTERPRISE' && (profile.levelConfirmedAt ? <Badge tone="green">{t('Confirmed by ToD', 'በToD ተረጋግጧል')}</Badge> : <Badge tone="amber">{t('Waiting for ToD to check your licence', 'ToD ፈቃድዎን እስኪያረጋግጥ በመጠበቅ ላይ')}</Badge>)}
+          {profile.level === 'VERIFIED_ENTERPRISE' && (profile.levelConfirmedAt ? <Badge tone="green">{t('Confirmed by ToD', 'በሥለ ተረጋግጧል')}</Badge> : <Badge tone="amber">{t('Waiting for ToD to check your licence', 'ሥለ ፈቃድዎን እስኪያረጋግጥ በመጠበቅ ላይ')}</Badge>)}
         </p>
         {limit && <Alert tone={limit.level === 'UNVERIFIED' ? 'warning' : 'info'}>{limitText(limit.level, limit.limit, t)}</Alert>}
         {limit?.level === 'PROVISIONAL' && <p className="text-stone-600">{t('Your identity is provisionally verified, so a lower limit applies until the full check is done.', 'ማንነትዎ በጊዜያዊነት ስለተረጋገጠ ሙሉ ማረጋገጫው እስኪጠናቀቅ ዝቅተኛ ገደብ ይሠራል።')}</p>}
@@ -131,8 +131,8 @@ function ClientForm({ profile, onSaved }: { profile: any; onSaved: () => void })
   const levelLimit = (v: Level, verifiedNote = false) => {
     if (!limits.data || !(v in limits.data)) return '';
     const n = limits.data[v];
-    if (n === null || n === undefined) return verifiedNote ? t('No limit on assignment value, once ToD checks your licence.', 'ToD ፈቃድዎን ካረጋገጠ በኋላ በሥራ ዋጋ ላይ ገደብ የለም።') : t('No limit on assignment value.', 'በሥራ ዋጋ ላይ ገደብ የለም።');
-    return verifiedNote ? t(`Each assignment up to ${etb(n)}, once ToD checks your licence.`, `ToD ፈቃድዎን ካረጋገጠ በኋላ እያንዳንዱ ሥራ እስከ ${etb(n)}።`) : t(`Each assignment up to ${etb(n)}.`, `እያንዳንዱ ሥራ እስከ ${etb(n)}።`);
+    if (n === null || n === undefined) return verifiedNote ? t('No limit on assignment value, once ToD checks your licence.', 'ሥለ ፈቃድዎን ካረጋገጠ በኋላ በሥራ ዋጋ ላይ ገደብ የለም።') : t('No limit on assignment value.', 'በሥራ ዋጋ ላይ ገደብ የለም።');
+    return verifiedNote ? t(`Each assignment up to ${etb(n)}, once ToD checks your licence.`, `ሥለ ፈቃድዎን ካረጋገጠ በኋላ እያንዳንዱ ሥራ እስከ ${etb(n)}።`) : t(`Each assignment up to ${etb(n)}.`, `እያንዳንዱ ሥራ እስከ ${etb(n)}።`);
   };
 
   const levels: { v: Level; title: string; limit: string; needs: string }[] = [
@@ -181,8 +181,8 @@ function ClientForm({ profile, onSaved }: { profile: any; onSaved: () => void })
               </span>
             </label>
           ))}
-          <p className="text-xs text-stone-500">{t('Limits are set by ToD and may change. Your current limit is shown above after you save.', 'ገደቦቹ በToD የሚወሰኑ ሲሆን ሊለወጡ ይችላሉ። ካስቀመጡ በኋላ የአሁኑ ገደብዎ ከላይ ይታያል።')}</p>
-          {levelChanging && <Alert tone="warning">{t('Changing your level means ToD needs to check your details again.', 'ደረጃዎን መቀየር ToD ዝርዝሮችዎን እንደገና እንዲያረጋግጥ ያደርጋል።')}</Alert>}
+          <p className="text-xs text-stone-500">{t('Limits are set by ToD and may change. Your current limit is shown above after you save.', 'ገደቦቹ በሥለ የሚወሰኑ ሲሆን ሊለወጡ ይችላሉ። ካስቀመጡ በኋላ የአሁኑ ገደብዎ ከላይ ይታያል።')}</p>
+          {levelChanging && <Alert tone="warning">{t('Changing your level means ToD needs to check your details again.', 'ደረጃዎን መቀየር ሥለ ዝርዝሮችዎን እንደገና እንዲያረጋግጥ ያደርጋል።')}</Alert>}
         </fieldset>
 
         {isEnterprise && (
@@ -237,7 +237,7 @@ function ClientForm({ profile, onSaved }: { profile: any; onSaved: () => void })
 
         <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
           <p className="font-semibold text-sky-900">{t('About the owners (optional)', 'ስለ ባለቤቶቹ (አማራጭ)')}</p>
-          <p className="mt-1 text-sm text-sky-900">{t('This helps us and our partners see who ToD reaches. It is not shown to talents.', 'ይህ እኛ እና አጋሮቻችን ToD እነማንን እንደሚደርስ እንድናይ ይረዳል። ለባለሙያዎች አይታይም።')}</p>
+          <p className="mt-1 text-sm text-sky-900">{t('This helps us and our partners see who ToD reaches. It is not shown to talents.', 'ይህ እኛ እና አጋሮቻችን ሥለ እነማንን እንደሚደርስ እንድናይ ይረዳል። ለባለሙያዎች አይታይም።')}</p>
           <div className="mt-3 space-y-3">
             <Field label={isEnterprise ? t('Is the business led by a woman?', 'ንግዱ በሴት ነው የሚመራው?') : t('Are you a woman?', 'ሴት ነዎት?')}>
               <Select value={womenLed} onChange={(e) => setWomenLed(e.target.value)} options={triOptions} />
@@ -252,7 +252,7 @@ function ClientForm({ profile, onSaved }: { profile: any; onSaved: () => void })
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={t('How did you hear about ToD?', 'ስለ ToD እንዴት ሰሙ?')}>
+          <Field label={t('How did you hear about ToD?', 'ስለ ሥለ እንዴት ሰሙ?')}>
             <Select
               value={referralSource}
               onChange={(e) => setReferralSource(e.target.value)}

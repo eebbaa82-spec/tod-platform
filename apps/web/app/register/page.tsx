@@ -88,7 +88,7 @@ function Register() {
         {step === 1 ? (
           <form onSubmit={requestCode} className="space-y-4">
             <fieldset>
-              <legend className="mb-2 text-sm font-medium">{t('How will you use ToD?', 'ቶድን እንዴት ይጠቀማሉ?')}</legend>
+              <legend className="mb-2 text-sm font-medium">{t('How will you use ToD?', 'ሥለን እንዴት ይጠቀማሉ?')}</legend>
               <div className="grid gap-2">
                 {roleCards.map((r) => (
                   <label

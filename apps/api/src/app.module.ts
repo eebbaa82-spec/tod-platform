@@ -19,6 +19,7 @@ import { JobsModule } from './jobs/jobs.module';
 import { MeModule } from './me/me.module';
 import { MessagingModule } from './messaging/messaging.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { PayLaterModule } from './paylater/paylater.module';
 import { PaymentsModule } from './payments/payments.module';
 import { RatingsModule } from './ratings/ratings.module';
 import { ReportsModule } from './reports/reports.module';
@@ -35,6 +36,7 @@ import { TalentModule } from './talent/talent.module';
     CohortsModule,
     FilesModule,
     PaymentsModule,
+    PayLaterModule,
     AuthModule,
     CatalogueModule,
     RatingsModule,

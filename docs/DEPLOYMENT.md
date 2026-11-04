@@ -43,9 +43,10 @@ cp .env.example .env
 Edit `deploy/.env`:
 
 * `APP_ENV`: `staging` or `production`.
-* `SITE_ADDRESS`: the domain, e.g. `tod.eruditeafrica.com`.
-* `WEB_ORIGIN`: the scheme and host only, e.g. `https://tod.eruditeafrica.com`.
-* `BASE_PATH`: leave empty to serve the platform at the root of the domain,
+* `SITE_ADDRESS`: the domain, e.g. `leseriw.com`.
+* `WEB_ORIGIN`: the scheme and host only, e.g. `https://leseriw.com`.
+* `BASE_PATH`: leave empty to serve the platform at the root of its own domain
+  (leseriw.com),
   or set a sub-path such as `/tod` (see *Serving under a sub-path* below).
 * `POSTGRES_PASSWORD`, `JWT_SECRET`, `FIELD_ENCRYPTION_KEY`: run
   `openssl rand -hex 32` three times and paste one result into each.
@@ -57,6 +58,11 @@ Keep a copy of `.env` somewhere safe outside the server. If
 be read again, even from a backup.
 
 ### Serving under a sub-path (eruditeafrica.com/tod)
+
+Only needed when the platform shares a domain with another website. On its own
+domain (leseriw.com, with the `A` record pointing at the server) leave
+`BASE_PATH` empty and skip this section.
+
 
 Set `BASE_PATH=/tod` to serve every page, the API (`/tod/api`) and uploaded
 files under `/tod`; the session cookie is then limited to `/tod` too. The
@@ -194,6 +200,12 @@ These are on by default and are changed in Console, Parameters:
   approves it (Console, Pilot groups).
 * `GESI_TARGETS` and `GESI_FLAGS` hold the Inception Report targets used by
   the GESI report.
+* `PAY_LATER_ENABLED` is `false`. Pay-later needs the signed lender's adapter
+  first (the test lender refuses to start in production). Then confirm
+  `PAY_LATER_LIMITS` with the lender, mark the pilot groups that may use it
+  (with an optional group cap), switch it on for each business in Console,
+  Pay-later, and give the lender a `LENDER_VIEWER` staff account for its
+  read-only view.
 
 ## Useful commands
 

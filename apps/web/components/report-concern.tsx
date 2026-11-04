@@ -30,7 +30,7 @@ export function ReportConcern({ assignmentId }: { assignmentId?: string }) {
       <Modal open={open} onClose={() => { setOpen(false); setDone(null); }} title={t('Report a concern in confidence', 'ስጋትዎን በሚስጥር ያሳውቁ')}>
         {!me ? (
           <div className="space-y-3 text-sm">
-            <p>{t('Sign in to send a confidential report, or call the ToD help line.', 'ሚስጥራዊ ሪፖርት ለመላክ ይግቡ፣ ወይም ወደ ToD የእርዳታ መስመር ይደውሉ።')}</p>
+            <p>{t('Sign in to send a confidential report, or call the ToD help line.', 'ሚስጥራዊ ሪፖርት ለመላክ ይግቡ፣ ወይም ወደ ሥለ የእርዳታ መስመር ይደውሉ።')}</p>
             <LinkButton href="/login">{t('Sign in', 'ይግቡ')}</LinkButton>
           </div>
         ) : done ? (

@@ -9,8 +9,10 @@ import { configureApp } from '../src/main';
 
 export type Api = ReturnType<typeof client>;
 
+// Test numbers start at 0930000000, clear of the seeded staff (0911000001...) and
+// demo accounts (0920000101...), so a random start can never run into them.
 let phoneSeq = Math.floor(Math.random() * 1_000_000);
-export const nextPhone = () => `09${String(10_000_000 + (phoneSeq++ % 89_999_999)).padStart(8, '0')}`;
+export const nextPhone = () => `09${String(30_000_000 + (phoneSeq++ % 69_999_999))}`;
 
 export async function bootApp() {
   const mod = await Test.createTestingModule({ imports: [AppModule] }).compile();

@@ -40,7 +40,7 @@ export default function Policies() {
   ];
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      <PageTitle sub={t('Summary. The full approved texts are published by the ToD consortium.', 'ማጠቃለያ። ሙሉ የጸደቁ ጽሑፎች በToD ጥምረት ይታተማሉ።')}>{t('How ToD works', 'ToD እንዴት እንደሚሠራ')}</PageTitle>
+      <PageTitle sub={t('Summary. The full approved texts are published by the ToD consortium.', 'ማጠቃለያ። ሙሉ የጸደቁ ጽሑፎች በሥለ ጥምረት ይታተማሉ።')}>{t('How ToD works', 'ሥለ እንዴት እንደሚሠራ')}</PageTitle>
       {sections.map((s) => (
         <Card key={s.id} title={s.title}>
           <ul id={s.id} className="list-disc space-y-2 pl-5 text-sm leading-relaxed">

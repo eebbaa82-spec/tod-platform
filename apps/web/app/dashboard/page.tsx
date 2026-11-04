@@ -181,6 +181,23 @@ function TalentChecklist({ p }: { p: any }) {
 // Client
 // ---------------------------------------------------------------------------
 
+// Shown once the client has used pay-later (FR-BNP-07).
+function PayLaterSummary() {
+  const { t, lang } = useLang();
+  const pl = useApi<any>('/paylater/me');
+  const open = (pl.data?.agreements ?? []).filter((a: any) => ['ACTIVE', 'DEFAULTED'].includes(a.status));
+  if (!open.length) return null;
+  const next = open.map((a: any) => a.nextDue).filter(Boolean).sort((x: any, y: any) => +new Date(x.dueOn) - +new Date(y.dueOn))[0];
+  const late = next && new Date(next.dueOn) < new Date(new Date().toDateString());
+  return (
+    <Alert tone={late ? 'error' : 'info'}>
+      <p className="font-semibold">{t(`Pay-later balance: ${etb(open.reduce((s: number, a: any) => s + a.outstanding, 0))}`, `የበኋላ ክፍያ ቀሪ ሂሳብ፦ ${etb(open.reduce((s: number, a: any) => s + a.outstanding, 0))}`)}</p>
+      {next && <p>{late ? t(`A repayment of ${etb(next.amount - next.paid)} was due on ${date(next.dueOn, lang)}. New requests are paused until you repay.`, `${etb(next.amount - next.paid)} ክፍያ በ${date(next.dueOn, lang)} መከፈል ነበረበት። እስኪከፍሉ ድረስ አዲስ ጥያቄ አይቻልም።`) : t(`Next repayment: ${etb(next.amount - next.paid)} by ${date(next.dueOn, lang)}.`, `ቀጣይ ክፍያ፦ ${etb(next.amount - next.paid)} እስከ ${date(next.dueOn, lang)}።`)}</p>}
+      <Link href="/pay-later" className="font-semibold underline">{t('See my repayments', 'ክፍያዎቼን ይመልከቱ')}</Link>
+    </Alert>
+  );
+}
+
 function ClientSection() {
   const { t } = useLang();
   const mine = useApi<any[]>('/assignments/mine/client');
@@ -205,6 +222,7 @@ function ClientSection() {
           <Link href="/profile/client" className="font-semibold underline">{t('Fill in business profile', 'የንግድ መገለጫ ይሙሉ')}</Link>
         </Alert>
       )}
+      <PayLaterSummary />
       {toRate.length > 0 && (
         <Card title={t('Please rate your talent', 'እባክዎ ባለሙያዎን ይገምግሙ')}>
           <ul className="space-y-2">

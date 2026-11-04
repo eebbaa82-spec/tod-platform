@@ -32,10 +32,10 @@ export class CohortsService {
     return c;
   }
 
-  async create(me: { id: string }, dto: { name: string; description?: string; valueLimit?: number | null; payLaterEligible?: boolean }) {
+  async create(me: { id: string }, dto: { name: string; description?: string; valueLimit?: number | null; payLaterEligible?: boolean; payLaterCap?: number | null }) {
     if (await this.prisma.cohort.findUnique({ where: { name: dto.name } })) throw fail.conflict('COHORT_EXISTS', 'A cohort with this name already exists.');
-    const c = await this.prisma.cohort.create({ data: { name: dto.name, description: dto.description, valueLimit: dto.valueLimit ?? null, payLaterEligible: dto.payLaterEligible ?? false, createdById: me.id } });
-    await this.audit.log({ actorId: me.id, action: 'COHORT_CREATED', entityType: 'Cohort', entityId: c.id, after: { name: c.name, valueLimit: c.valueLimit, payLaterEligible: c.payLaterEligible } });
+    const c = await this.prisma.cohort.create({ data: { name: dto.name, description: dto.description, valueLimit: dto.valueLimit ?? null, payLaterEligible: dto.payLaterEligible ?? false, payLaterCap: dto.payLaterCap ?? null, createdById: me.id } });
+    await this.audit.log({ actorId: me.id, action: 'COHORT_CREATED', entityType: 'Cohort', entityId: c.id, after: { name: c.name, valueLimit: c.valueLimit, payLaterEligible: c.payLaterEligible, payLaterCap: c.payLaterCap } });
     return c;
   }
 
@@ -44,7 +44,7 @@ export class CohortsService {
     if (c.status === 'APPROVED') return c;
     if (c.status === 'CLOSED') throw fail.conflict('COHORT_CLOSED', 'This cohort is closed.');
     const updated = await this.prisma.cohort.update({ where: { id }, data: { status: 'APPROVED', approvedById: me.id, approvedAt: this.clock.now() } });
-    await this.audit.log({ actorId: me.id, action: 'COHORT_APPROVED', entityType: 'Cohort', entityId: id, after: { name: c.name, members: c.members.length, valueLimit: c.valueLimit, payLaterEligible: c.payLaterEligible, note } });
+    await this.audit.log({ actorId: me.id, action: 'COHORT_APPROVED', entityType: 'Cohort', entityId: id, after: { name: c.name, members: c.members.length, valueLimit: c.valueLimit, payLaterEligible: c.payLaterEligible, payLaterCap: c.payLaterCap, note } });
     return updated;
   }
 

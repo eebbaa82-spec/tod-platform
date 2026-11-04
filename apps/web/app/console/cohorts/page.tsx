@@ -51,7 +51,7 @@ function Cohorts() {
               <StatusBadge key="s" status={c.status} />,
               c._count?.members ?? 0,
               c.valueLimit === null ? t('Client level limit', 'የደንበኛ ደረጃ ገደብ') : etb(c.valueLimit),
-              c.payLaterEligible ? t('Eligible', 'ብቁ') : t('No', 'አይ'),
+              c.payLaterEligible ? (c.payLaterCap != null ? t(`Eligible, cap ${etb(c.payLaterCap)}`, `ብቁ፣ ጣሪያ ${etb(c.payLaterCap)}`) : t('Eligible', 'ብቁ')) : t('No', 'አይ'),
               date(c.approvedAt, lang),
               <div key="x" className="flex flex-wrap gap-2">
                 {canApprove && c.status === 'PROPOSED' && (
@@ -150,6 +150,7 @@ function NewCohort({ onDone }: { onDone: (m: string) => void }) {
   const [description, setDescription] = useState('');
   const [limit, setLimit] = useState('');
   const [payLater, setPayLater] = useState(false);
+  const [cap, setCap] = useState('');
   const a = useAction();
   return (
     <Card title={t('New group', 'አዲስ ቡድን')}>
@@ -157,7 +158,7 @@ function NewCohort({ onDone }: { onDone: (m: string) => void }) {
         className="max-w-lg space-y-3"
         onSubmit={async (e) => {
           e.preventDefault();
-          const r = await a.run(() => post('/admin/cohorts', { name: name.trim(), description: description.trim() || undefined, valueLimit: limit ? toSantim(limit) : null, payLaterEligible: payLater }));
+          const r = await a.run(() => post('/admin/cohorts', { name: name.trim(), description: description.trim() || undefined, valueLimit: limit ? toSantim(limit) : null, payLaterEligible: payLater, payLaterCap: payLater && cap ? toSantim(cap) : null }));
           if (r) {
             setName('');
             setDescription('');
@@ -176,6 +177,11 @@ function NewCohort({ onDone }: { onDone: (m: string) => void }) {
           <Input type="number" min={0} value={limit} onChange={(e) => setLimit(e.target.value)} />
         </Field>
         <Checkbox checked={payLater} onChange={(e) => setPayLater(e.target.checked)} label={t('Eligible for pay-later (when it is switched on)', 'ለበኋላ ክፍያ ብቁ (ሲበራ)')} />
+        {payLater && (
+          <Field label={t('Pay-later cap for the group (birr, optional)', 'የቡድኑ የበኋላ ክፍያ ጣሪያ (ብር፣ አማራጭ)')} hint={t('The most the whole group may owe at once. Leave empty for no group cap.', 'መላው ቡድን በአንድ ጊዜ ሊበደር የሚችለው ከፍተኛ መጠን። ለገደብ አልባ ባዶ ይተዉት።')}>
+            <Input type="number" min={0} value={cap} onChange={(e) => setCap(e.target.value)} />
+          </Field>
+        )}
         <ErrorText error={a.error} />
         <Button type="submit" busy={a.busy}>
           {t('Create group', 'ቡድን ፍጠር')}

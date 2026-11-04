@@ -12,6 +12,7 @@ import { addWorkingDays } from '../common/working-days';
 import { transition } from '../assignments/state';
 import { EscrowGateway } from '../integrations/escrow';
 import { NotificationsService } from '../notifications/notifications.service';
+import { PayLaterService } from '../paylater/paylater.service';
 import { PaymentsService } from '../payments/payments.service';
 
 export const REMEDIES = ['CORRECTION', 'PARTIAL_ACCEPTANCE', 'MILESTONE_ADJUSTMENT', 'REFUND', 'REASSIGNMENT', 'RELEASE_IN_FULL'] as const;
@@ -40,6 +41,7 @@ export class DisputesService {
     private readonly params: ParametersService,
     private readonly notifications: NotificationsService,
     private readonly payments: PaymentsService,
+    private readonly payLater: PayLaterService,
     private readonly escrow: EscrowGateway,
     private readonly clock: ClockService,
     private readonly files: FilesService,
@@ -326,6 +328,7 @@ export class DisputesService {
       }
       await this.prisma.milestone.update({ where: { id: m.id }, data: { status: 'ACCEPTED' } });
       await this.payments.splitMilestone(m.id, d.releaseAmount ?? 0, d.refundAmount ?? 0, approvals, d.ref);
+      await this.payLater.onMilestoneSettled(m.id);
     }
     await this.audit.log({ actorId: approvals.approvedById, action: 'DISPUTE_EXECUTED', entityType: 'Dispute', entityId: id, after: { remedy: d.remedy, release: d.releaseAmount, refund: d.refundAmount, accountAction: d.accountAction, approvals } });
     // Closure notices to both parties (FR-DSP-07).

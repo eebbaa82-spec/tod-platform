@@ -1,11 +1,12 @@
-# Integration guide for the three developer modules
+# Integration guide for the developer modules
 
-The marketplace is complete except for three modules that the integration
+The marketplace is complete except for the modules that the integration
 developer builds:
 
 1. **Identity verification through the partner bank** (requirements section 4.2, FR-KYC-01 to 12, interface IF-01)
 2. **The vetting workflow** (section 4.4, FR-VET-01 to 12)
 3. **Bank-held escrow with reconciliation** (section 4.9, FR-ESC-01 to 13)
+4. **The pay-later lender adapter** (section 4.10, FR-BNP-03 and 05), once a lender is signed
 
 Each module plugs into the API through a small, fixed interface in
 `apps/api/src/integrations`. The rest of the platform depends only on these
@@ -22,6 +23,7 @@ production at all.
 | Identity (partner bank) | `IDENTITY_PROVIDER` and `IdentityResultService.apply()` in `integrations/identity.ts` | `PendingIdentityProvider` plus `POST /api/dev/identity/:userId` |
 | Vetting | `VettingOutcomeService.apply()` in `integrations/vetting.ts` | `POST /api/dev/vetting/:userId` |
 | Escrow | `ESCROW_PROVIDER` (`EscrowProvider`) in `integrations/escrow.ts`, and `PaymentEventsService` in `payments/payment-events.service.ts` | `TestEscrowProvider` plus `POST /api/dev/funding/:reference` |
+| Pay-later lender | `LENDER_CONNECTOR` (`LenderConnector`) in `integrations/lender.ts`, and `PayLaterService.lenderDecision()` in `paylater/paylater.service.ts` | `TestLenderConnector` (approves within the per-assignment limit) |
 
 Providers are wired in `apps/api/src/integrations/integrations.module.ts`.
 Replace the stand-in class there with your implementation.
@@ -233,12 +235,46 @@ the talent's payout record (`TalentProfile.payoutAccountEnc`, decrypted with
 
 ---
 
+## 4. Pay-later lender
+
+### What the marketplace does already
+
+Everything except talking to the lender: eligibility and limits, the
+application data, the acknowledgement of debt, funding escrow from the
+facility through `PaymentEventsService.fundingConfirmed()` (channel
+`PAY_LATER_FACILITY`), the repayment schedule, reminders, arrears, default,
+the portfolio freeze, exceptions, the lender's read-only view and the
+evidence pack. Finance records repayments the lender receives.
+
+### What you build
+
+An adapter for the signed lender that implements `LenderConnector`:
+
+```ts
+interface LenderConnector {
+  readonly name: string;
+  submit(a: LenderApplication): Promise<LenderDecision>;   // decision now, or later
+  drawdown(d: DrawdownRequest): Promise<{ drawdownRef: string }>; // pay into escrow
+  reportRepayment(r: RepaymentReport): Promise<void>;
+}
+```
+
+If the lender decides later, return `{ lenderRef }` without a decision and call
+`PayLaterService.lenderDecision({ lenderRef, decision, reason })` when it
+arrives. `LenderGateway` records every call once by idempotency key in the
+same register as escrow instructions. The drawdown must pay the agreement
+amount into escrow against `paymentReference`. Money refunded from escrow on a
+pay-later assignment returns to the facility and reduces the balance owed.
+
+---
+
 ## Wiring your implementation
 
 ```ts
 // apps/api/src/integrations/integrations.module.ts
 { provide: IDENTITY_PROVIDER, useClass: PartnerBankIdentityProvider },
 { provide: ESCROW_PROVIDER, useClass: PartnerBankEscrowProvider },
+{ provide: LENDER_CONNECTOR, useClass: SignedLenderConnector },
 ```
 
 If your module runs as a separate service, add a controller in your module
@@ -251,5 +287,6 @@ production.
 `apps/api/test/e2e/journeys.spec.ts` runs the acceptance scenarios from
 section 9.2 against a real database using the stand-ins. Swap a stand-in for
 your implementation in a test module and the same scenarios should pass.
-Scenarios 8 (reconciliation variance) and 9 (pay-later) belong to your module
-and to the R2 pay-later work.
+Scenario 8 (reconciliation variance) belongs to your module. Pay-later
+(scenario 9) runs in `apps/api/test/e2e/pay-later.spec.ts` against the test
+lender; run it against your lender adapter too.

@@ -5,7 +5,7 @@ type T = { en: { title: string; body: string }; am: { title: string; body: strin
 export const TEMPLATES: Record<string, T> = {
   OTP: {
     en: { title: 'Your code', body: 'Your ToD code is {code}. It expires in {minutes} minutes. Do not share it.' },
-    am: { title: 'የእርስዎ ኮድ', body: 'የToD ኮድዎ {code} ነው። በ{minutes} ደቂቃ ውስጥ ጊዜው ያልፋል። ለማንም አያጋሩ።' },
+    am: { title: 'የእርስዎ ኮድ', body: 'የሥለ ኮድዎ {code} ነው። በ{minutes} ደቂቃ ውስጥ ጊዜው ያልፋል። ለማንም አያጋሩ።' },
   },
   ACCOUNT_LOCKED: {
     en: { title: 'Account locked', body: 'Too many failed sign-ins. Your account is locked for {minutes} minutes. If this was not you, contact support.' },
@@ -98,6 +98,34 @@ export const TEMPLATES: Record<string, T> = {
   ACCOUNT_REINSTATED: {
     en: { title: 'Account reinstated', body: 'Your account is active again.' },
     am: { title: 'መለያ ተመልሷል', body: 'መለያዎ እንደገና ንቁ ሆኗል።' },
+  },
+  PAY_LATER_APPROVED: {
+    en: { title: 'Pay-later approved', body: 'The lender approved {amount} for "{title}", to repay within {days} days of accepting the work. Sign the acknowledgement of debt to start the work.' },
+    am: { title: 'የበኋላ ክፍያ ጸድቋል', body: 'አበዳሪው ለ"{title}" {amount} አጽድቋል፤ ሥራውን ከተቀበሉ በ{days} ቀናት ውስጥ ይከፍላሉ። ሥራው እንዲጀመር የዕዳ ማረጋገጫውን ይፈርሙ።' },
+  },
+  PAY_LATER_DECLINED: {
+    en: { title: 'Pay-later not approved', body: 'The lender did not approve pay-later for "{title}". You can still pay into escrow now using reference {reference}.' },
+    am: { title: 'የበኋላ ክፍያ አልጸደቀም', body: 'አበዳሪው ለ"{title}" የበኋላ ክፍያ አላጸደቀም። አሁንም በመለያ ቁጥር {reference} ወደ ኤስክሮ መክፈል ይችላሉ።' },
+  },
+  PAY_LATER_SCHEDULE: {
+    en: { title: 'Repayment due {due}', body: 'You accepted work on "{title}". Repay {amount} to the lender by {due}, quoting {ref}.' },
+    am: { title: 'ክፍያ እስከ {due}', body: 'በ"{title}" ሥራ ተቀብለዋል። {amount} እስከ {due} ድረስ ለአበዳሪው ይክፈሉ፤ {ref} ይጥቀሱ።' },
+  },
+  PAY_LATER_REMINDER: {
+    en: { title: 'Repayment reminder', body: '{amount} for {ref} is due on {due}. Pay on time to keep using pay-later.' },
+    am: { title: 'የክፍያ ማስታወሻ', body: 'ለ{ref} {amount} በ{due} መከፈል አለበት። የበኋላ ክፍያን መጠቀም ለመቀጠል በሰዓቱ ይክፈሉ።' },
+  },
+  PAY_LATER_DUE_TODAY: {
+    en: { title: 'Repayment due today', body: '{amount} for {ref} is due today.' },
+    am: { title: 'ክፍያው ዛሬ ነው', body: 'ለ{ref} {amount} ዛሬ መከፈል አለበት።' },
+  },
+  PAY_LATER_OVERDUE: {
+    en: { title: 'Repayment overdue', body: '{amount} for {ref} is {days} days late. New assignments are paused until you repay. Contact support if you need help.' },
+    am: { title: 'ክፍያው ዘግይቷል', body: 'ለ{ref} {amount} {days} ቀናት ዘግይቷል። እስኪከፍሉ ድረስ አዲስ ሥራ መለጠፍ አይችሉም። እርዳታ ከፈለጉ ድጋፍን ያግኙ።' },
+  },
+  PAY_LATER_REPAYMENT: {
+    en: { title: 'Repayment received', body: 'We recorded {amount} for {ref}. Balance left: {balance}.' },
+    am: { title: 'ክፍያ ደርሷል', body: 'ለ{ref} {amount} ተመዝግቧል። ቀሪ ሂሳብ፦ {balance}።' },
   },
   STAFF_ALERT: {
     en: { title: '{subject}', body: '{detail}' },

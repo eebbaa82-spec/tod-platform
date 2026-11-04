@@ -112,8 +112,28 @@ publication, suspension, reduced visibility field) is built.
 
 ## 4.10 Pay-later
 
-FR-BNP-01 to 10 are **Later** (R2). `PAY_LATER_ENABLED` is off and the arrears
-check is a hook in `AssignmentsService.assertNotInArrears`.
+Built ahead of R2 against a **test lender** (`TestLenderConnector`). The real
+lender plugs in through `LENDER_CONNECTOR` in `integrations/lender.ts`; see
+the integration guide, section 4. `PAY_LATER_ENABLED` stays off in a fresh
+install. Limits are in `PAY_LATER_LIMITS`, the tenor in `PAY_LATER_TENOR_DAYS`
+and the default and freeze rules in `PAY_LATER_RISK`; all are FINANCIAL
+parameters and need a second approver to change.
+
+| ID | Status | Notes |
+| --- | --- | --- |
+| FR-BNP-01 | Built ✔ | Global switch `PAY_LATER_ENABLED`; per-client switch for administrators (Console, Pay-later) |
+| FR-BNP-02 | Built ✔ | Confirmed verified enterprise, bank-verified identity, establishment date, approved pay-later cohort, stated purpose, no arrears or default |
+| FR-BNP-03 | Built ✔ | The agreed application data (registration, beneficial owner, time in operation, platform history, amount, tenor, purpose) goes to the lender and is kept as sent; the lender's decision is recorded, never made by ToD |
+| FR-BNP-04 | Built ✔ | Lender limits per enterprise, per assignment and for the portfolio; first-cycle limit; cohort cap (`Cohort.payLaterCap`); sector cap as a share of the portfolio limit; step-up after a full repayment |
+| FR-BNP-05 | Built ✔ | The facility funds escrow; each accepted (or dispute-released) stage becomes an instalment due 30 to 60 days later |
+| FR-BNP-06 | Built ✔ | Acknowledgement of debt signed with the client's PIN, in their language, with time and IP, before any drawdown |
+| FR-BNP-07 | Built ✔ | Reminders before (`PAY_LATER_REMINDER_DAYS_BEFORE`), on, and 1, 8 and 31 days after the due date; new assignments blocked while late |
+| FR-BNP-08 | Built ✔ | Partial repayments applied oldest first; ageing, default rate, arrears over 30 days as a share of the balance, matured loans; default rate in the indicators report |
+| FR-BNP-09 | Built ✔ | No second agreement while any pay-later balance is open |
+| FR-BNP-10 | Built ✔ | `LENDER_VIEWER` role: read-only portfolio, agreements and evidence packs |
+| FR-BNP-11 | Built ✔ | Daily check: above the trigger, new approvals freeze, client limits are cut (`freezeLimitCut`), finance is alerted and the event is flagged for the SNV snapshot; finance lifts the freeze with a reason |
+| FR-BNP-12 | Built ✔ | Portfolio view (Console, Pay-later) and an evidence pack per borrower (agreement, acknowledgement, accepted work, schedule, reminders, repayments, exceptions, audit trail) |
+| FR-BNP-13 | Built ✔ | Negotiated due dates and other exceptions need a reason and a second approver; repeat use waits for a recorded affordability reassessment |
 
 ## 4.11 Commission and fees
 
@@ -210,4 +230,4 @@ Requirements added since V-002.
 | BR-16 | R1 | Built | Trust levels from completed work, rating, repeat clients and upheld disputes (`TRUST_THRESHOLDS`) |
 | BR-02 | R1 | Built | Inclusive 1% commission ends on `COMMISSION_INCLUSIVE_UNTIL` (22 Feb 2027) |
 | FR-TAL-08, BR-13, 14 | R2 | Later | Readiness index |
-| Pay-later | R2 | Partly | Cohort eligibility is stored; the feature itself is R2 |
+| FR-BNP-01 to 13 | R2 | Built ✔ | Pay-later with a test lender, ready for the signed lender's adapter (see 4.10) |

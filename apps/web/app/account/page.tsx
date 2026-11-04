@@ -119,7 +119,7 @@ function Identity() {
       <ErrorText error={error} />
       {s !== 'VERIFIED' && s !== 'PENDING' && (
         <div className="mt-3 space-y-3">
-          <Checkbox checked={consent} onChange={(e) => setConsent(e.target.checked)} label={t('I agree that ToD asks its partner bank to confirm that I hold an active account in my name, and that the bank shares my name, sex and date of birth with ToD.', 'ToD በስሜ ንቁ የባንክ ሂሳብ እንዳለኝ ከአጋር ባንኩ እንዲያረጋግጥ፣ ባንኩም ስሜን፣ ጾታዬንና የትውልድ ቀኔን ለToD እንዲያጋራ እስማማለሁ።')} />
+          <Checkbox checked={consent} onChange={(e) => setConsent(e.target.checked)} label={t('I agree that ToD asks its partner bank to confirm that I hold an active account in my name, and that the bank shares my name, sex and date of birth with ToD.', 'ሥለ በስሜ ንቁ የባንክ ሂሳብ እንዳለኝ ከአጋር ባንኩ እንዲያረጋግጥ፣ ባንኩም ስሜን፣ ጾታዬንና የትውልድ ቀኔን ከሥለ ጋር እንዲያጋራ እስማማለሁ።')} />
           <Button onClick={start} busy={busy} disabled={!consent} className="w-full sm:w-auto">
             {t('Verify my identity through my bank', 'ማንነቴን በባንኬ በኩል አረጋግጥ')}
           </Button>
@@ -144,7 +144,7 @@ function Roles() {
       await refresh();
     });
   return (
-    <Card title={t('Use ToD another way', 'ቶድን በሌላ መንገድ ይጠቀሙ')}>
+    <Card title={t('Use ToD another way', 'ሥለን በሌላ መንገድ ይጠቀሙ')}>
       {added ? (
         <div className="space-y-2">
           <Alert tone="success">{t('Role added.', 'ሚናው ተጨምሯል።')}</Alert>
@@ -291,7 +291,7 @@ function MyData() {
     <Card title={t('My data', 'የእኔ መረጃ')}>
       <div className="space-y-5">
         <div>
-          <p className="text-sm text-stone-600">{t('Get a copy of everything ToD holds about you.', 'ቶድ ስለእርስዎ የያዘውን መረጃ በሙሉ ቅጂ ያግኙ።')}</p>
+          <p className="text-sm text-stone-600">{t('Get a copy of everything ToD holds about you.', 'ሥለ ስለእርስዎ የያዘውን መረጃ በሙሉ ቅጂ ያግኙ።')}</p>
           <Button tone="secondary" onClick={download} busy={exp.busy} className="mt-2 w-full sm:w-auto">
             {t('Download my data', 'መረጃዬን አውርድ')}
           </Button>

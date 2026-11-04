@@ -16,7 +16,7 @@ export function CommissionNote() {
     <p className="text-xs text-stone-500">
       {t(
         'ToD takes a small commission from your payment: usually 5%, or 1% for verified women and talents with a confirmed disability. The exact rate is fixed when the client accepts your offer.',
-        'ToD ከክፍያዎ ትንሽ ኮሚሽን ይወስዳል፦ ብዙ ጊዜ 5%፣ ወይም ለተረጋገጡ ሴቶች እና የአካል ጉዳታቸው ለተረጋገጠ ባለሙያዎች 1%። ትክክለኛው መጠን ደንበኛው ቅናሽዎን ሲቀበል ይወሰናል።',
+        'ሥለ ከክፍያዎ ትንሽ ኮሚሽን ይወስዳል፦ ብዙ ጊዜ 5%፣ ወይም ለተረጋገጡ ሴቶች እና የአካል ጉዳታቸው ለተረጋገጠ ባለሙያዎች 1%። ትክክለኛው መጠን ደንበኛው ቅናሽዎን ሲቀበል ይወሰናል።',
       )}
     </p>
   );

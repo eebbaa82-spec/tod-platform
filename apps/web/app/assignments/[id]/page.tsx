@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { PayLaterPanel } from '@/components/pay-later';
 import { ReportConcern } from '@/components/report-concern';
 import { RequireAuth } from '@/components/shell';
 import { Alert, Badge, Button, Card, ErrorText, Field, Modal, PageTitle, Spinner, StatusBadge, Textarea, useAction } from '@/components/ui';
@@ -63,6 +64,7 @@ function Workspace() {
       )}
       {role === 'CLIENT' && a.status === 'OPEN' && <ClientProposals a={a} reload={reload} onAccepted={setPayment} onMessage={openThread} />}
       {role === 'CLIENT' && a.status === 'AGREED' && <PaymentPanel a={a} accepted={payment} />}
+      {role === 'CLIENT' && !['REQUESTED', 'OPEN', 'CANCELLED'].includes(a.status) && <PayLaterPanel a={a} reload={reload} />}
 
       <CancelPanel a={a} reload={reload} />
       {role !== 'INVITED_TALENT' && <Milestones a={a} reload={reload} />}
@@ -95,7 +97,7 @@ function Header({ a }: { a: any }) {
   else if (a.budgetMax) rows.push([t('Budget', 'በጀት'), t(`up to ${etb(a.budgetMax)}`, `እስከ ${etb(a.budgetMax)}`)]);
   if (role === 'TALENT' && a.agreedPrice && rate !== null) {
     const commission = Math.round(a.agreedPrice * rate);
-    rows.push([t(`ToD commission (${Math.round(rate * 1000) / 10}%)`, `የToD ኮሚሽን (${Math.round(rate * 1000) / 10}%)`), etb(commission)]);
+    rows.push([t(`ToD commission (${Math.round(rate * 1000) / 10}%)`, `የሥለ ኮሚሽን (${Math.round(rate * 1000) / 10}%)`), etb(commission)]);
     rows.push([t('You receive', 'የሚቀበሉት'), <span key="n" className="font-bold text-green-700">{etb(a.agreedPrice - commission)}</span>]);
   }
   if (role !== 'CLIENT') rows.push([t('Client', 'ደንበኛ'), <span key="c">{a.client?.name} {a.client?.verified && <Badge tone="green">✓ {t('Verified', 'ተረጋግጧል')}</Badge>}</span>]);

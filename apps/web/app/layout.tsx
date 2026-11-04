@@ -3,7 +3,7 @@ import './globals.css';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  title: 'Talent on Demand',
+  title: 'Talent on Demand · ለሰሪው',
   description: 'Vetted young talent for small businesses in Addis Ababa, paid safely through bank-held escrow.',
 };
 
