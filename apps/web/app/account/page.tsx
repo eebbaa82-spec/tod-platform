@@ -38,7 +38,7 @@ function useRoleLabel() {
 }
 
 function Summary() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const { me } = useSession();
   const roleLabel = useRoleLabel();
   if (!me) return null;
@@ -61,7 +61,13 @@ function Summary() {
           }
         />
         <Row label={t('Account status', 'የመለያ ሁኔታ')} value={<StatusBadge status={me.status} />} />
+        {me.telegramChatId && <Row label={t('Telegram chat ID', 'የቴሌግራም ቻት መለያ')} value={<span className="font-mono">{me.telegramChatId}</span>} />}
       </dl>
+      {me.erasureRequestedAt && (
+        <div className="mt-3">
+          <Alert tone="warning">{t(`You asked us to erase your data on ${date(me.erasureRequestedAt, lang)}. Our team is handling it.`, `መረጃዎ እንዲሰረዝ በ${date(me.erasureRequestedAt, lang)} ጠይቀዋል። ቡድናችን እያስተናገደው ነው።`)}</Alert>
+        </div>
+      )}
     </Card>
   );
 }
@@ -71,6 +77,7 @@ function Identity() {
   const { me, refresh } = useSession();
   const { busy, error, run } = useAction();
   const [result, setResult] = useState<{ status: string; message?: string; redirectUrl?: string } | null>(null);
+  const [consent, setConsent] = useState(false);
   if (!me) return null;
   const s = me.identityStatus;
   const label: Record<string, string> = {
@@ -82,21 +89,21 @@ function Identity() {
   };
   const start = () =>
     run(async () => {
-      const r = await post<{ status: string; message?: string; redirectUrl?: string }>('/me/identity/start');
+      const r = await post<{ status: string; message?: string; redirectUrl?: string }>('/me/identity/start', { consent });
       setResult(r);
       await refresh();
       if (r.redirectUrl && /^https?:\/\//i.test(r.redirectUrl)) window.location.href = r.redirectUrl;
     });
   return (
-    <Card title={t('Identity (Fayda)', 'ማንነት (ፋይዳ)')}>
+    <Card title={t('Identity (through your bank)', 'ማንነት (በባንክዎ በኩል)')}>
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <StatusBadge status={s} label={label[s] ?? humanise(s)} />
         {me.identityMasked && <span className="font-mono text-stone-700">{me.identityMasked}</span>}
       </div>
       <p className="mt-2 text-sm text-stone-600">
         {t(
-          'A verified identity builds trust. We only keep a masked form of your ID number.',
-          'የተረጋገጠ ማንነት እምነትን ይገነባል። የመታወቂያ ቁጥርዎን የምንይዘው በተሸፈነ መልኩ ብቻ ነው።',
+          'A verified identity builds trust. Your bank opened your account only after checking your Fayda ID, so we confirm your identity with the partner bank. We never see or keep your ID photo, and any ID number is shown masked.',
+          'የተረጋገጠ ማንነት እምነትን ይገነባል። ባንክዎ ሂሳብዎን የከፈተው የፋይዳ መታወቂያዎን ካረጋገጠ በኋላ ስለሆነ ማንነትዎን ከአጋር ባንኩ ጋር እናረጋግጣለን። የመታወቂያ ፎቶዎን አናይም አንይዝምም፤ ማንኛውም የመታወቂያ ቁጥር በተሸፈነ መልኩ ብቻ ይታያል።',
         )}
       </p>
       {result?.message && (
@@ -106,14 +113,17 @@ function Identity() {
       )}
       {result?.redirectUrl && (
         <a href={result.redirectUrl} className="mt-2 inline-block py-2 text-sm font-semibold text-brand-700 underline">
-          {t('Continue to Fayda', 'ወደ ፋይዳ ይቀጥሉ')}
+          {t('Continue to your bank', 'ወደ ባንክዎ ይቀጥሉ')}
         </a>
       )}
       <ErrorText error={error} />
       {s !== 'VERIFIED' && s !== 'PENDING' && (
-        <Button onClick={start} busy={busy} className="mt-3 w-full sm:w-auto">
-          {t('Verify my identity', 'ማንነቴን አረጋግጥ')}
-        </Button>
+        <div className="mt-3 space-y-3">
+          <Checkbox checked={consent} onChange={(e) => setConsent(e.target.checked)} label={t('I agree that ToD asks its partner bank to confirm that I hold an active account in my name, and that the bank shares my name, sex and date of birth with ToD.', 'ToD በስሜ ንቁ የባንክ ሂሳብ እንዳለኝ ከአጋር ባንኩ እንዲያረጋግጥ፣ ባንኩም ስሜን፣ ጾታዬንና የትውልድ ቀኔን ለToD እንዲያጋራ እስማማለሁ።')} />
+          <Button onClick={start} busy={busy} disabled={!consent} className="w-full sm:w-auto">
+            {t('Verify my identity through my bank', 'ማንነቴን በባንኬ በኩል አረጋግጥ')}
+          </Button>
+        </div>
       )}
     </Card>
   );
@@ -220,8 +230,11 @@ function Preferences() {
           </Field>
         )}
         {channels.includes('TELEGRAM') && (
-          <Field label={t('Telegram chat ID', 'የቴሌግራም ቻት መለያ')} hint={t('Leave empty to keep the one you saved before.', 'ቀድሞ ያስቀመጡትን ለማቆየት ባዶ ይተዉት።')}>
-            <Input inputMode="numeric" value={telegram} onChange={(e) => setTelegram(e.target.value)} />
+          <Field
+            label={t('Telegram chat ID', 'የቴሌግራም ቻት መለያ')}
+            hint={me?.telegramChatId ? t(`Saved now: ${me.telegramChatId}. Leave empty to keep it.`, `አሁን የተቀመጠው፦ ${me.telegramChatId}። ለማቆየት ባዶ ይተዉት።`) : t('Leave empty to keep the one you saved before.', 'ቀድሞ ያስቀመጡትን ለማቆየት ባዶ ይተዉት።')}
+          >
+            <Input inputMode="numeric" value={telegram} onChange={(e) => setTelegram(e.target.value)} placeholder={me?.telegramChatId ?? ''} />
           </Field>
         )}
         <ErrorText error={error} />
@@ -236,7 +249,7 @@ function Preferences() {
 
 function MyData() {
   const { t, lang } = useLang();
-  const { logout } = useSession();
+  const { me, logout, refresh } = useSession();
   const exp = useAction();
   const deact = useAction();
   const erase = useAction();
@@ -270,7 +283,9 @@ function MyData() {
     erase.run(async () => {
       const r = await post<{ requestedAt: string; ticket?: string }>('/me/erasure', reason.trim() ? { reason: reason.trim() } : {});
       setErased(r);
+      refresh();
     });
+  const erasedAt = erased?.requestedAt ?? me?.erasureRequestedAt ?? null;
 
   return (
     <Card title={t('My data', 'የእኔ መረጃ')}>
@@ -301,11 +316,11 @@ function MyData() {
               'የመሰረዝ ጥያቄዎችን ቡድናችን ያስተናግዳል። የክፍያና የፋይናንስ መዝገቦች ሕጉና ደጋፊዎቻችን ለሚጠይቁት ጊዜ ይቆያሉ፣ ከዚያ ይሰረዛሉ።',
             )}
           </p>
-          {erased ? (
+          {erasedAt ? (
             <div className="mt-2">
               <Alert tone="success">
-                {t('Request received on', 'ጥያቄው የደረሰው በ')} {date(erased.requestedAt, lang)}
-                {erased.ticket ? ` · ${t('Reference', 'መለያ ቁጥር')} ${erased.ticket}` : ''}
+                {t('Request received on', 'ጥያቄው የደረሰው በ')} {date(erasedAt, lang)}
+                {erased?.ticket ? ` · ${t('Reference', 'መለያ ቁጥር')} ${erased.ticket}` : ''}
               </Alert>
             </div>
           ) : (
@@ -329,7 +344,7 @@ function MyData() {
         </div>
       </Modal>
 
-      <Modal open={eraseOpen && !erased} onClose={() => setEraseOpen(false)} title={t('Request erasure', 'መሰረዝ ጠይቅ')}>
+      <Modal open={eraseOpen && !erasedAt} onClose={() => setEraseOpen(false)} title={t('Request erasure', 'መሰረዝ ጠይቅ')}>
         <div className="space-y-3">
           <Field label={t('Why? (optional)', 'ለምን? (አማራጭ)')}>
             <Textarea maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} />

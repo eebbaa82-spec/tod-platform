@@ -28,7 +28,7 @@ export default function NotificationsPage() {
 function Notifications() {
   const { t, lang } = useLang();
   const router = useRouter();
-  const { data, error, loading, setData } = useApi<{ items: Notification[]; unreadCount: number }>('/notifications');
+  const { data, error, loading, setData } = useApi<{ items: Notification[]; unreadCount: number }>(`/notifications?lang=${lang}`);
   const all = useAction();
 
   const markRead = (id: string) =>

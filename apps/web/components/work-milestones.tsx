@@ -114,9 +114,11 @@ function Deliveries({ m, a }: { m: any; a: any }) {
               ))}
             </ul>
           )}
-          {d.fileIds?.length > 0 && (
+          {(d.files?.length > 0 || d.fileIds?.length > 0) && (
             <div className="mt-1 flex flex-wrap gap-3">
-              {d.fileIds.map((f: string, j: number) => <FileLink key={f} id={f} name={t(`File ${j + 1}`, `ፋይል ${j + 1}`)} />)}
+              {d.files?.length > 0
+                ? d.files.map((f: { id: string; name: string }) => <FileLink key={f.id} id={f.id} name={f.name} />)
+                : d.fileIds.map((f: string, j: number) => <FileLink key={f} id={f} name={t(`File ${j + 1}`, `ፋይል ${j + 1}`)} />)}
             </div>
           )}
           {Array.isArray(d.checklist) && d.checklist.length > 0 && (

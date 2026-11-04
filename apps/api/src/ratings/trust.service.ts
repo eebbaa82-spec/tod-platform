@@ -4,11 +4,16 @@ import { PrismaService } from '../common/prisma.service';
 
 export interface TrustScore {
   score: number | null; // 0-100, null while the talent is new
-  level: 'NEW' | 'TRUSTED' | 'TOP_RATED' | 'ESTABLISHED';
+  level: 'NEW' | 'TRUSTED' | 'TOP_RATED';
   completed: number;
   averageRating: number | null;
   ratingCount: number;
   components: Record<string, number | null>;
+}
+
+export interface TrustThresholds {
+  trusted: { minCompleted: number; minRating: number; maxUpheldDisputes: number };
+  topRated: { minCompleted: number; minRating: number; minRepeatClients: number };
 }
 
 // Trust score from the weighted components in BR-15, shown as a level (FR-RAT-05).
@@ -24,7 +29,7 @@ export class TrustService {
 
   async forTalent(talentUserId: string): Promise<TrustScore> {
     const weights = await this.params.get<Record<string, number>>('TRUST_WEIGHTS');
-    const thresholds = await this.params.get<{ minCompleted: number; trusted: number; topRated: number }>('TRUST_THRESHOLDS');
+    const thresholds = await this.params.get<TrustThresholds>('TRUST_THRESHOLDS');
 
     const assignments = await this.prisma.assignment.findMany({
       where: { talentId: talentUserId, status: { in: ['CLOSED', 'ACCEPTED', 'CANCELLED', 'DISPUTED'] }, fundedAt: { not: null } },
@@ -58,7 +63,7 @@ export class TrustService {
       conduct: completed ? Math.max(0, 1 - lost / completed) : null,
     };
 
-    if (completed < thresholds.minCompleted) {
+    if (completed === 0) {
       return { score: null, level: 'NEW', completed, averageRating: avg, ratingCount, components };
     }
     // Missing components (for example no repeat clients yet) are scored on the
@@ -72,7 +77,12 @@ export class TrustService {
       weightSum += w;
     }
     const score = weightSum ? Math.round((total / weightSum) * 100) : null;
-    const level = score === null ? 'NEW' : score >= thresholds.topRated ? 'TOP_RATED' : score >= thresholds.trusted ? 'TRUSTED' : 'ESTABLISHED';
+    // Levels follow the criteria in BR-16, not the score.
+    const tr = thresholds.trusted;
+    const top = thresholds.topRated;
+    const isTrusted = completed >= tr.minCompleted && avg !== null && avg >= tr.minRating && lost <= tr.maxUpheldDisputes;
+    const isTop = isTrusted && completed >= top.minCompleted && avg !== null && avg >= top.minRating && repeatClients >= top.minRepeatClients;
+    const level = isTop ? 'TOP_RATED' : isTrusted ? 'TRUSTED' : 'NEW';
     return { score, level, completed, averageRating: avg, ratingCount, components };
   }
 }

@@ -3,7 +3,7 @@
 The marketplace is complete except for three modules that the integration
 developer builds:
 
-1. **Fayda identity verification** (requirements section 4.2, FR-KYC-01 to 12)
+1. **Identity verification through the partner bank** (requirements section 4.2, FR-KYC-01 to 12, interface IF-01)
 2. **The vetting workflow** (section 4.4, FR-VET-01 to 12)
 3. **Bank-held escrow with reconciliation** (section 4.9, FR-ESC-01 to 13)
 
@@ -19,7 +19,7 @@ production at all.
 
 | Module | Where it plugs in | Stand-in used today |
 | --- | --- | --- |
-| Fayda | `IDENTITY_PROVIDER` and `IdentityResultService.apply()` in `integrations/identity.ts` | `PendingIdentityProvider` plus `POST /api/dev/identity/:userId` |
+| Identity (partner bank) | `IDENTITY_PROVIDER` and `IdentityResultService.apply()` in `integrations/identity.ts` | `PendingIdentityProvider` plus `POST /api/dev/identity/:userId` |
 | Vetting | `VettingOutcomeService.apply()` in `integrations/vetting.ts` | `POST /api/dev/vetting/:userId` |
 | Escrow | `ESCROW_PROVIDER` (`EscrowProvider`) in `integrations/escrow.ts`, and `PaymentEventsService` in `payments/payment-events.service.ts` | `TestEscrowProvider` plus `POST /api/dev/funding/:reference` |
 
@@ -28,23 +28,33 @@ Replace the stand-in class there with your implementation.
 
 ---
 
-## 1. Fayda identity verification
+## 1. Identity verification through the partner bank
+
+Requirements Definition V-005 replaced a direct Fayda integration with a check
+through the partner bank. The platform never connects to Fayda. With the
+user's consent it asks the bank to confirm that the user holds an active
+account in their own name. The bank activates accounts only after Fayda
+verification, so that confirmation is the proof of identity (FR-KYC-01).
 
 ### What the marketplace does already
 
-* `POST /api/me/identity/start` is the user's "Verify my identity" button. It
-  calls `IdentityVerificationProvider.start(userId)` and marks the user
-  `PENDING`. Whatever your `start()` returns (`redirectUrl`, `message`) is
-  passed back to the app, so an eSignet or VeriFayda redirect works without UI
-  changes.
+* `POST /api/me/identity/start` with `{ "consent": true }` is the user's
+  "Verify my identity through my bank" button. It refuses the request without
+  consent (`400 CONSENT_REQUIRED`), records a `PARTNER_BANK_IDENTITY_CHECK`
+  consent for **every** request (FR-KYC-02), calls
+  `IdentityVerificationProvider.start(userId)` and marks the user `PENDING`.
+  Whatever your `start()` returns (`redirectUrl`, `message`) is passed back to
+  the app, so a hand-off to the bank's app or page works without UI changes
+  (FR-KYC-11).
 * `IdentityResultService.apply(result, actorId?)` is the single place where an
   identity outcome is written. It:
   * enforces **one account per identity** using `identityToken`, and rejects
     a duplicate with `409 IDENTITY_DUPLICATE` (FR-KYC-04);
   * refuses anyone **under the minimum age** (parameter `MINIMUM_AGE`, 18),
     deactivates the account and returns `403 UNDER_AGE` (FR-ACC-09);
-  * stores only the masked identifier (`6302 XXXX XXXX 9718`), verified name,
-    sex, date of birth, photo file id and status (FR-KYC-03, FR-KYC-05);
+  * stores only the verified name, sex, date of birth, status and, if the bank
+    supplies an identifier, its masked form (`6302 XXXX XXXX 9718`). No photo
+    is received or stored (FR-KYC-03, 05, 07);
   * writes an `IDENTITY_RESULT` audit entry with the method and reference, and
     a hash of the token, never the attributes themselves (FR-KYC-08);
   * publishes or hides the talent profile through `PublicationService`.
@@ -52,21 +62,24 @@ Replace the stand-in class there with your implementation.
   `ASSIGNMENT_VALUE_LIMITS.PROVISIONAL` limit; unverified users cannot post
   (FR-KYC-09, FR-CLI-05).
 * The 1% inclusive commission for women uses `sex` from the verified result,
-  so it applies only after Fayda verification (FR-COM-01).
+  so it applies only after identity verification (FR-COM-01).
 
 ### What you build
 
-* The relying-party flow with Fayda (VeriFayda 2.0 or eSignet): consent
-  capture before each request (FR-KYC-02), OTP or biometric authentication on
-  Fayda's side, and the callback.
-* The **encrypted identifier vault**: the authentic FAN or FIN is held only in
-  your module, encrypted separately, and readable only by the verification
-  service (FR-KYC-06). Give the marketplace a stable opaque `identityToken`
-  per person instead.
-* The provisional manual-verification queue and the failed or partial review
-  queue with retry limits and escalation (FR-KYC-09, FR-KYC-10).
-* Counting verification calls for cost reporting (FR-KYC-12).
-* No biometric data is ever stored (FR-KYC-07).
+* The **bank connector** (IF-01): a signed API call over a secure channel,
+  with credentials held outside the codebase, that asks the partner bank to
+  confirm an active account in the holder's name and returns name, sex, date
+  of birth, the result and the bank customer reference.
+* The **encrypted reference vault**: the bank customer reference, and any
+  national identifier the bank returns, are held only in your module,
+  encrypted separately and readable only by the verification service
+  (FR-KYC-06). Give the marketplace a stable opaque `identityToken` derived
+  from the reference instead.
+* The provisional manual-verification queue, for users the bank cannot
+  confirm or who do not yet bank with the partner, and the failed or partial
+  review queue with retry limits and escalation (FR-KYC-09, FR-KYC-10).
+* Counting requests to the bank so any agreed fee can be reported (FR-KYC-12).
+* Never receive or store photographs or biometric data (FR-KYC-03, FR-KYC-07).
 
 ### Contract
 
@@ -80,14 +93,13 @@ interface IdentityVerificationProvider {
 interface IdentityResult {
   userId: string;
   status: 'VERIFIED' | 'PROVISIONAL' | 'FAILED' | 'PENDING';
-  identityToken?: string;          // stable, opaque, one per person
-  identifierForMasking?: string;   // FAN/FIN in clear, used only to compute the mask, never stored
+  identityToken?: string;          // stable, opaque, derived from the bank customer reference
+  identifierForMasking?: string;   // identifier from the bank, if any; used only for the mask, never stored
   verifiedName?: string;
   sex?: 'FEMALE' | 'MALE';
   dateOfBirth?: Date;
-  photoFileId?: string;            // upload the photo through FilesService first
-  method: 'FAYDA_OTP' | 'FAYDA_BIOMETRIC' | 'MANUAL_PROVISIONAL' | 'TEST_STAND_IN';
-  reference?: string;              // Fayda transaction reference
+  method: 'PARTNER_BANK' | 'PARTNER_BANK_APP' | 'MANUAL_PROVISIONAL' | 'TEST_STAND_IN';
+  reference?: string;              // request reference for the audit trail
 }
 ```
 
@@ -225,7 +237,7 @@ the talent's payout record (`TalentProfile.payoutAccountEnc`, decrypted with
 
 ```ts
 // apps/api/src/integrations/integrations.module.ts
-{ provide: IDENTITY_PROVIDER, useClass: FaydaIdentityProvider },
+{ provide: IDENTITY_PROVIDER, useClass: PartnerBankIdentityProvider },
 { provide: ESCROW_PROVIDER, useClass: PartnerBankEscrowProvider },
 ```
 

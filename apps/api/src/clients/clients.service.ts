@@ -18,16 +18,17 @@ export class ClientsService {
     private readonly clock: ClockService,
   ) {}
 
-  // Three client levels (FR-CLI-01 to FR-CLI-04). Identity of the owner or
-  // individual is verified through Fayda by the identity module.
+  // Three client levels (FR-CLI-01 to FR-CLI-04, FR-CLI-08). The owner or
+  // individual is verified through the partner bank by the identity module.
   async upsert(userId: string, dto: ClientProfileDto) {
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
     if (!user.roles.includes('CLIENT')) throw fail.forbidden('NOT_CLIENT', 'Only client accounts have a client profile.');
     if (dto.level === 'VERIFIED_ENTERPRISE') {
-      const missing = (['enterpriseName', 'tradeLicenceNo', 'tin', 'sector', 'subCity'] as const).filter((k) => !dto[k]);
+      const missing = (['enterpriseName', 'tradeLicenceNo', 'tin', 'sector', 'subCity', 'establishedOn', 'beneficialOwner'] as const).filter((k) => !dto[k]);
       if (missing.length || dto.staffSize === undefined) {
-        throw fail.bad('ENTERPRISE_FIELDS', 'A verified enterprise needs its name, trade licence, taxpayer number (TIN), sector, sub-city and staff size.');
+        throw fail.bad('ENTERPRISE_FIELDS', 'A verified enterprise needs its name, trade licence, taxpayer number (TIN), sector, sub-city, staff size, date of establishment and beneficial owner.');
       }
+      if (new Date(dto.establishedOn!) > this.clock.now()) throw fail.bad('ESTABLISHED_ON', 'The date of establishment cannot be in the future.');
       if (!/^\d{10}$/.test(dto.tin!)) throw fail.bad('TIN_FORMAT', 'The taxpayer number (TIN) has 10 digits.');
     }
     if (dto.level === 'BASIC_ENTERPRISE' && !dto.enterpriseName) {
@@ -39,11 +40,12 @@ export class ClientsService {
     const existing = await this.prisma.clientProfile.findUnique({ where: { userId } });
     if (dto.evidenceFileId) await this.files.link(userId, [dto.evidenceFileId], 'CLIENT_PROFILE', userId);
     const levelChanged = existing && existing.level !== dto.level;
+    const data = { ...dto, establishedOn: dto.establishedOn ? new Date(dto.establishedOn) : undefined };
     const profile = await this.prisma.clientProfile.upsert({
       where: { userId },
-      create: { userId, ...dto },
+      create: { userId, ...data },
       // A level change needs staff confirmation again.
-      update: { ...dto, ...(levelChanged ? { levelConfirmedAt: null, levelConfirmedById: null } : {}) },
+      update: { ...data, ...(levelChanged ? { levelConfirmedAt: null, levelConfirmedById: null } : {}) },
     });
     await this.audit.log({ actorId: userId, action: existing ? 'CLIENT_PROFILE_UPDATED' : 'CLIENT_PROFILE_CREATED', entityType: 'ClientProfile', entityId: profile.id, before: existing ? { level: existing.level } : null, after: { level: dto.level, referralSource: dto.referralSource } });
     return profile;
@@ -63,6 +65,10 @@ export class ClientsService {
     const updated = await this.prisma.clientProfile.update({ where: { userId: clientUserId }, data: { levelConfirmedAt: this.clock.now(), levelConfirmedById: staffId } });
     await this.audit.log({ actorId: staffId, action: 'CLIENT_LEVEL_CONFIRMED', entityType: 'ClientProfile', entityId: p.id, after: { level: p.level, note } });
     return updated;
+  }
+
+  async limits() {
+    return this.params.get<Record<string, number | null>>('ASSIGNMENT_VALUE_LIMITS');
   }
 
   // The level used for limits: unconfirmed enterprises are treated as basic,

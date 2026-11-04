@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { CohortsModule } from '../cohorts/cohorts.module';
 import { ClientsModule } from '../clients/clients.module';
 import { RatingsModule } from '../ratings/ratings.module';
 import { AssignmentsController } from './assignments.controller';
@@ -7,7 +8,7 @@ import { MatchingService } from './matching.service';
 import { MilestonesService } from './milestones.service';
 
 @Module({
-  imports: [ClientsModule, RatingsModule],
+  imports: [ClientsModule, RatingsModule, CohortsModule],
   controllers: [AssignmentsController],
   providers: [AssignmentsService, MatchingService, MilestonesService],
   exports: [AssignmentsService, MilestonesService, MatchingService],

@@ -1,5 +1,7 @@
 import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUrl, Max, MaxLength, Min, MinLength } from 'class-validator';
 
+export const RECRUITMENT_CHANNELS = ['UNIVERSITY', 'TVET', 'WOMEN_ORG', 'YOUTH_ORG', 'DISABILITY_ORG', 'IDP_ORG', 'CAMPAIGN', 'OTHER'];
+
 export class UpdateTalentProfileDto {
   @IsOptional() @IsString() @MaxLength(120) headline?: string;
   @IsOptional() @IsString() @MaxLength(3000) bio?: string;
@@ -17,6 +19,9 @@ export class UpdateTalentProfileDto {
   @IsOptional() @IsBoolean() displaced?: boolean | null;
   @IsOptional() @IsBoolean() otherMarginalised?: boolean | null;
   @IsOptional() @IsInt() @Min(0) @Max(10) onboardingStep?: number;
+  // How the talent heard of ToD, for outreach analysis by group (FR-TAL-12).
+  @IsOptional() @IsIn(RECRUITMENT_CHANNELS) recruitmentChannel?: string;
+  @IsOptional() @IsString() @MaxLength(160) referringOrganisation?: string;
 }
 
 export class PayoutAccountDto {
@@ -31,4 +36,8 @@ export class PortfolioItemDto {
   @IsString() @MinLength(2) @MaxLength(1000) description: string;
   @IsOptional() @IsUrl({ require_protocol: true }) url?: string;
   @IsOptional() @IsString() fileId?: string;
+}
+
+export class PhotoDto {
+  @IsOptional() @IsString() fileId?: string | null;
 }

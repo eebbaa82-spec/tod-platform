@@ -54,58 +54,61 @@ enum Sex {
 }
 
 model User {
-  id               String         @id @default(cuid())
-  phone            String         @unique
-  passwordHash     String
-  displayName      String
-  language         Language       @default(en)
-  status           AccountStatus  @default(PENDING)
-  roles            Role[]
-  failedLoginCount Int            @default(0)
-  lockedUntil      DateTime?
-  mfaSecret        String?
-  mfaEnabled       Boolean        @default(false)
-  email            String?
-  telegramChatId   String?
-  notifyChannels   String[]       @default(["IN_APP", "SMS"])
+  id                     String         @id @default(cuid())
+  phone                  String         @unique
+  passwordHash           String
+  displayName            String
+  language               Language       @default(en)
+  status                 AccountStatus  @default(PENDING)
+  roles                  Role[]
+  failedLoginCount       Int            @default(0)
+  lockedUntil            DateTime?
+  mfaSecret              String?
+  mfaEnabled             Boolean        @default(false)
+  email                  String?
+  telegramChatId         String?
+  notifyChannels         String[]       @default(["IN_APP", "SMS"])
   // Identity verification results, written only through IdentityVerificationService (4.2).
-  identityStatus   IdentityStatus @default(UNVERIFIED)
-  identityToken    String?        @unique
-  identityMasked   String?
-  verifiedName     String?
-  sex              Sex?
-  dateOfBirth      DateTime?
-  photoFileId      String?
-  identityVerifiedAt DateTime?
+  identityStatus         IdentityStatus @default(UNVERIFIED)
+  identityToken          String?        @unique
+  identityMasked         String?
+  verifiedName           String?
+  sex                    Sex?
+  dateOfBirth            DateTime?
+  photoFileId            String?
+  identityVerifiedAt     DateTime?
+  // Live transactions are limited to approved cohorts (FR-ADM-07).
+  cohortId               String?
+  cohort                 Cohort?        @relation(fields: [cohortId], references: [id])
   // Designated safeguarding staff may see confidential cases (FR-SUP-02).
-  safeguardingDesignated Boolean  @default(false)
-  assistedById     String?
-  assistedBy       User?          @relation("AssistedRegistration", fields: [assistedById], references: [id])
-  assistedUsers    User[]         @relation("AssistedRegistration")
-  suspensionReason String?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  lastSignInAt     DateTime?
-  deactivatedAt    DateTime?
-  erasureRequestedAt DateTime?
+  safeguardingDesignated Boolean        @default(false)
+  assistedById           String?
+  assistedBy             User?          @relation("AssistedRegistration", fields: [assistedById], references: [id])
+  assistedUsers          User[]         @relation("AssistedRegistration")
+  suspensionReason       String?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  lastSignInAt           DateTime?
+  deactivatedAt          DateTime?
+  erasureRequestedAt     DateTime?
 
-  consents         Consent[]
-  devices          TrustedDevice[]
-  talentProfile    TalentProfile?
-  clientProfile    ClientProfile?
-  notifications    Notification[]
-  files            FileObject[]
+  consents      Consent[]
+  devices       TrustedDevice[]
+  talentProfile TalentProfile?
+  clientProfile ClientProfile?
+  notifications Notification[]
+  files         FileObject[]
 }
 
 model Consent {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id])
-  document    String    // TERMS, PRIVACY, COMMUNITY or a purpose-specific consent
-  version     String
-  acceptedAt  DateTime  @default(now())
-  withdrawnAt DateTime?
-  recordedById String?  // support agent for assisted registration
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  document     String // TERMS, PRIVACY, COMMUNITY or a purpose-specific consent
+  version      String
+  acceptedAt   DateTime  @default(now())
+  withdrawnAt  DateTime?
+  recordedById String? // support agent for assisted registration
 
   @@index([userId, document])
 }
@@ -113,7 +116,7 @@ model Consent {
 model OtpCode {
   id         String    @id @default(cuid())
   phone      String
-  purpose    String    // REGISTER, NEW_DEVICE, RESET, ASSISTED_CONSENT
+  purpose    String // REGISTER, NEW_DEVICE, RESET, ASSISTED_CONSENT
   codeHash   String
   expiresAt  DateTime
   attempts   Int       @default(0)
@@ -124,11 +127,11 @@ model OtpCode {
 }
 
 model TrustedDevice {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
   deviceHash String
-  createdAt DateTime @default(now())
+  createdAt  DateTime @default(now())
   lastSeenAt DateTime @default(now())
 
   @@unique([userId, deviceHash])
@@ -164,43 +167,49 @@ enum PayoutChannel {
 }
 
 model TalentProfile {
-  id                 String        @id @default(cuid())
-  userId             String        @unique
-  user               User          @relation(fields: [userId], references: [id])
-  headline           String?
-  bio                String?
-  city               String        @default("Addis Ababa")
-  subCity            String?
-  education          Json          @default("[]")
-  credentials        Json          @default("[]")
-  experience         Json          @default("[]")
-  skills             String[]
-  languages          String[]
-  hoursPerWeek       Int?
-  workingDays        String[]
-  workMode           WorkMode      @default(REMOTE)
+  id                    String         @id @default(cuid())
+  userId                String         @unique
+  user                  User           @relation(fields: [userId], references: [id])
+  headline              String?
+  bio                   String?
+  city                  String         @default("Addis Ababa")
+  subCity               String?
+  education             Json           @default("[]")
+  credentials           Json           @default("[]")
+  experience            Json           @default("[]")
+  skills                String[]
+  languages             String[]
+  hoursPerWeek          Int?
+  workingDays           String[]
+  workMode              WorkMode       @default(REMOTE)
   // Voluntary, never shown publicly (FR-TAL-02, FR-TAL-03).
-  disability         Boolean?
-  disabilityConfirmed Boolean      @default(false)
-  displaced          Boolean?
-  otherMarginalised  Boolean?
+  disability            Boolean?
+  disabilityConfirmed   Boolean        @default(false)
+  displaced             Boolean?
+  otherMarginalised     Boolean?
   // Payout account (FR-TAL-09). Account number is field-encrypted.
-  payoutChannel      PayoutChannel?
-  payoutAccountEnc   String?
-  payoutAccountMasked String?
-  payoutAccountName  String?
-  payoutNameVerified Boolean       @default(false)
+  payoutChannel         PayoutChannel?
+  payoutAccountEnc      String?
+  payoutAccountMasked   String?
+  payoutAccountName     String?
+  payoutNameVerified    Boolean        @default(false)
   // Written by the vetting module (developer), read by the marketplace.
-  vettingStatus      VettingStatus @default(NOT_STARTED)
-  publishedAt        DateTime?
-  avgResponseMinutes Int?
-  onboardingStep     Int           @default(0)
-  visibility         String        @default("NORMAL") // NORMAL or REDUCED (sanctions)
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  vettingStatus         VettingStatus  @default(NOT_STARTED)
+  publishedAt           DateTime?
+  avgResponseMinutes    Int?
+  onboardingStep        Int            @default(0)
+  visibility            String         @default("NORMAL") // NORMAL or REDUCED (sanctions)
+  // How the talent was recruited, for outreach analysis by group (FR-TAL-12):
+  // UNIVERSITY, TVET, WOMEN_ORG, YOUTH_ORG, DISABILITY_ORG, IDP_ORG, CAMPAIGN, OTHER.
+  recruitmentChannel    String?
+  referringOrganisation String?
+  // Photo the talent chose for their public profile; identity photos are never received.
+  photoFileId           String?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
 
-  tiers              TalentTier[]
-  portfolio          PortfolioItem[]
+  tiers     TalentTier[]
+  portfolio PortfolioItem[]
 }
 
 model TalentTier {
@@ -239,28 +248,30 @@ enum ClientLevel {
 }
 
 model ClientProfile {
-  id               String      @id @default(cuid())
-  userId           String      @unique
-  user             User        @relation(fields: [userId], references: [id])
-  level            ClientLevel
-  enterpriseName   String?
-  tradeLicenceNo   String?
-  tin              String?
-  sector           String?
-  city             String      @default("Addis Ababa")
-  subCity          String?
-  staffSize        Int?
-  womenLed         Boolean?
-  youthLed         Boolean?
-  pwdOwned         Boolean?
-  activityEvidence String?     // referral partner or site evidence note (FR-CLI-03)
-  evidenceFileId   String?
-  referralSource   String      // ASSOCIATION, SUBCITY_OFFICE, CAMPAIGN, OTHER
-  referralDetail   String?
-  levelConfirmedAt DateTime?
+  id                 String      @id @default(cuid())
+  userId             String      @unique
+  user               User        @relation(fields: [userId], references: [id])
+  level              ClientLevel
+  enterpriseName     String?
+  tradeLicenceNo     String?
+  tin                String?
+  sector             String?
+  city               String      @default("Addis Ababa")
+  subCity            String?
+  staffSize          Int?
+  womenLed           Boolean?
+  youthLed           Boolean?
+  pwdOwned           Boolean?
+  establishedOn      DateTime? // date of establishment (FR-CLI-02)
+  beneficialOwner    String? // name of the beneficial owner (FR-CLI-02)
+  activityEvidence   String? // referral partner or site evidence note (FR-CLI-03)
+  evidenceFileId     String?
+  referralSource     String // ASSOCIATION, SUBCITY_OFFICE, CAMPAIGN, OTHER
+  referralDetail     String?
+  levelConfirmedAt   DateTime?
   levelConfirmedById String?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
 }
 
 // ---------------------------------------------------------------------------
@@ -278,43 +289,43 @@ model ServiceArea {
 }
 
 model Package {
-  id               String           @id @default(cuid())
-  code             String           @unique
-  serviceAreaId    String
-  serviceArea      ServiceArea      @relation(fields: [serviceAreaId], references: [id])
-  status           String           @default("ACTIVE") // ACTIVE or RETIRED
-  extensionCategory Boolean         @default(false)
-  currentVersionId String?          @unique
-  currentVersion   PackageVersion?  @relation("CurrentVersion", fields: [currentVersionId], references: [id])
-  versions         PackageVersion[] @relation("Versions")
-  createdAt        DateTime         @default(now())
+  id                String           @id @default(cuid())
+  code              String           @unique
+  serviceAreaId     String
+  serviceArea       ServiceArea      @relation(fields: [serviceAreaId], references: [id])
+  status            String           @default("ACTIVE") // ACTIVE or RETIRED
+  extensionCategory Boolean          @default(false)
+  currentVersionId  String?          @unique
+  currentVersion    PackageVersion?  @relation("CurrentVersion", fields: [currentVersionId], references: [id])
+  versions          PackageVersion[] @relation("Versions")
+  createdAt         DateTime         @default(now())
 }
 
 model PackageVersion {
-  id                 String       @id @default(cuid())
-  packageId          String
-  package            Package      @relation("Versions", fields: [packageId], references: [id])
-  currentOf          Package?     @relation("CurrentVersion")
-  version            Int
-  titleEn            String
-  titleAm            String
-  scopeEn            String
-  scopeAm            String
-  exclusionsEn       String
-  exclusionsAm       String
-  deliverableEn      String
-  deliverableAm      String
-  turnaroundDays     Int
-  revisionLimit      Int
-  checklistEn        String[]
-  checklistAm        String[]
-  minTier            Tier
-  priceMin           Int          // santim
-  priceMax           Int          // santim
-  priceStandard      Int          // santim; the package price talents can accept directly
-  createdById        String?
-  createdAt          DateTime     @default(now())
-  assignments        Assignment[]
+  id             String       @id @default(cuid())
+  packageId      String
+  package        Package      @relation("Versions", fields: [packageId], references: [id])
+  currentOf      Package?     @relation("CurrentVersion")
+  version        Int
+  titleEn        String
+  titleAm        String
+  scopeEn        String
+  scopeAm        String
+  exclusionsEn   String
+  exclusionsAm   String
+  deliverableEn  String
+  deliverableAm  String
+  turnaroundDays Int
+  revisionLimit  Int
+  checklistEn    String[]
+  checklistAm    String[]
+  minTier        Tier
+  priceMin       Int // santim
+  priceMax       Int // santim
+  priceStandard  Int // santim; the package price talents can accept directly
+  createdById    String?
+  createdAt      DateTime     @default(now())
+  assignments    Assignment[]
 
   @@unique([packageId, version])
 }
@@ -324,8 +335,8 @@ model PackageVersion {
 // ---------------------------------------------------------------------------
 
 enum AssignmentStatus {
-  REQUESTED   // client need captured, not yet scoped (support converts it)
-  OPEN        // invitations out, proposals being received
+  REQUESTED // client need captured, not yet scoped (support converts it)
+  OPEN // invitations out, proposals being received
   AGREED
   FUNDED
   DELIVERED
@@ -336,44 +347,48 @@ enum AssignmentStatus {
 }
 
 model Assignment {
-  id               String           @id @default(cuid())
-  ref              String           @unique
-  clientId         String
-  talentId         String?
-  packageVersionId String?
-  packageVersion   PackageVersion?  @relation(fields: [packageVersionId], references: [id])
-  serviceAreaId    String?
-  custom           Boolean          @default(false)
-  title            String
-  brief            String
-  budgetMax        Int?
-  agreedPrice      Int?
-  commissionRate   Decimal?         @db.Decimal(5, 4)
-  commissionRule   String?
-  status           AssignmentStatus @default(OPEN)
-  deadline         DateTime?
-  createdById      String           // client, or support agent on their behalf
-  repeatOfId       String?
-  directTalentId   String?          // repeat engagement (FR-MAT-08)
-  cancelReason     String?
+  id                  String           @id @default(cuid())
+  ref                 String           @unique
+  clientId            String
+  talentId            String?
+  packageVersionId    String?
+  packageVersion      PackageVersion?  @relation(fields: [packageVersionId], references: [id])
+  serviceAreaId       String?
+  custom              Boolean          @default(false)
+  title               String
+  brief               String
+  budgetMax           Int?
+  agreedPrice         Int?
+  commissionRate      Decimal?         @db.Decimal(5, 4)
+  commissionRule      String?
+  status              AssignmentStatus @default(OPEN)
+  deadline            DateTime?
+  createdById         String // client, or support agent on their behalf
+  repeatOfId          String?
+  directTalentId      String? // repeat engagement (FR-MAT-08)
+  cancelReason        String?
   cancelRequestedById String?
-  cancelRequestedAt DateTime?
-  agreedAt         DateTime?
-  fundedAt         DateTime?
-  closedAt         DateTime?
-  noProposalAlertAt DateTime?
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+  cancelRequestedAt   DateTime?
+  agreedAt            DateTime?
+  fundedAt            DateTime?
+  closedAt            DateTime?
+  noProposalAlertAt   DateTime?
+  // Named staff member responsible for the case (FR-ESC-14).
+  caseOwnerId         String?
+  // Funded while escrow ran in interim mode; shown as "interim" (FR-ESC-14).
+  interim             Boolean          @default(false)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 
-  milestones       Milestone[]
-  invitations      Invitation[]
-  proposals        Proposal[]
-  priceRecords     PriceRecord[]
-  events           AssignmentEvent[]
-  messages         Message[]
-  disputes         Dispute[]
-  ratings          Rating[]
-  payments         PaymentInstruction[]
+  milestones   Milestone[]
+  invitations  Invitation[]
+  proposals    Proposal[]
+  priceRecords PriceRecord[]
+  events       AssignmentEvent[]
+  messages     Message[]
+  disputes     Dispute[]
+  ratings      Rating[]
+  payments     PaymentInstruction[]
 
   @@index([clientId])
   @@index([talentId])
@@ -392,38 +407,38 @@ model AssignmentEvent {
 }
 
 model Invitation {
-  id           String     @id @default(cuid())
-  assignmentId String
-  assignment   Assignment @relation(fields: [assignmentId], references: [id])
-  talentId     String
-  rank         Int
-  score        Float
-  scoreDetail  Json
-  inclusionSlot Boolean   @default(false)
-  status       String     @default("INVITED") // INVITED, PROPOSED, DECLINED, EXPIRED, WITHDRAWN
-  respondBy    DateTime
-  respondedAt  DateTime?
+  id            String     @id @default(cuid())
+  assignmentId  String
+  assignment    Assignment @relation(fields: [assignmentId], references: [id])
+  talentId      String
+  rank          Int
+  score         Float
+  scoreDetail   Json
+  inclusionSlot Boolean    @default(false)
+  status        String     @default("INVITED") // INVITED, PROPOSED, DECLINED, EXPIRED, WITHDRAWN
+  respondBy     DateTime
+  respondedAt   DateTime?
   declineReason String?
-  createdAt    DateTime   @default(now())
+  createdAt     DateTime   @default(now())
 
   @@unique([assignmentId, talentId])
 }
 
 model Proposal {
-  id           String     @id @default(cuid())
-  assignmentId String
-  assignment   Assignment @relation(fields: [assignmentId], references: [id])
-  talentId     String
-  amount       Int
-  atPackagePrice Boolean  @default(false)
-  deliveryDays Int?
-  message      String?
-  status       String     @default("SUBMITTED") // SUBMITTED, COUNTERED, ACCEPTED, REJECTED, WITHDRAWN
-  counterAmount Int?
-  counterReason String?
-  rejectReason String?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id             String     @id @default(cuid())
+  assignmentId   String
+  assignment     Assignment @relation(fields: [assignmentId], references: [id])
+  talentId       String
+  amount         Int
+  atPackagePrice Boolean    @default(false)
+  deliveryDays   Int?
+  message        String?
+  status         String     @default("SUBMITTED") // SUBMITTED, COUNTERED, ACCEPTED, REJECTED, WITHDRAWN
+  counterAmount  Int?
+  counterReason  String?
+  rejectReason   String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   @@unique([assignmentId, talentId])
 }
@@ -434,9 +449,9 @@ model PriceRecord {
   assignmentId String
   assignment   Assignment @relation(fields: [assignmentId], references: [id])
   actorId      String
-  actorRole    String     // CLIENT or TALENT
+  actorRole    String // CLIENT or TALENT
   talentId     String?
-  kind         String     // OFFERED, COUNTERED, ACCEPTED, REFUSED
+  kind         String // OFFERED, COUNTERED, ACCEPTED, REFUSED
   amount       Int
   reason       String?
   at           DateTime   @default(now())
@@ -455,39 +470,39 @@ enum MilestoneStatus {
 }
 
 model Milestone {
-  id                String          @id @default(cuid())
-  assignmentId      String
-  assignment        Assignment      @relation(fields: [assignmentId], references: [id])
-  seq               Int
-  title             String
-  amount            Int
-  deadline          DateTime?
-  status            MilestoneStatus @default(PENDING)
-  revisionsUsed     Int             @default(0)
-  deliveredAt       DateTime?
+  id                 String          @id @default(cuid())
+  assignmentId       String
+  assignment         Assignment      @relation(fields: [assignmentId], references: [id])
+  seq                Int
+  title              String
+  amount             Int
+  deadline           DateTime?
+  status             MilestoneStatus @default(PENDING)
+  revisionsUsed      Int             @default(0)
+  deliveredAt        DateTime?
   reviewWindowEndsAt DateTime?
-  remindersSent     Int             @default(0)
-  acceptedAt        DateTime?
-  acceptedById      String?
-  autoAccepted      Boolean         @default(false)
-  deadlineAlertedAt DateTime?
-  deadlineMissedAt  DateTime?
-  deliveries        Delivery[]
-  settlement        Settlement?
+  remindersSent      Int             @default(0)
+  acceptedAt         DateTime?
+  acceptedById       String?
+  autoAccepted       Boolean         @default(false)
+  deadlineAlertedAt  DateTime?
+  deadlineMissedAt   DateTime?
+  deliveries         Delivery[]
+  settlement         Settlement?
 
   @@unique([assignmentId, seq])
 }
 
 model Delivery {
-  id          String    @id @default(cuid())
-  milestoneId String
-  milestone   Milestone @relation(fields: [milestoneId], references: [id])
-  note        String
-  links       String[]
-  fileIds     String[]
-  checklist   Json      // [{ item, done }]
-  submittedAt DateTime  @default(now())
-  revisionRequest String?
+  id                  String    @id @default(cuid())
+  milestoneId         String
+  milestone           Milestone @relation(fields: [milestoneId], references: [id])
+  note                String
+  links               String[]
+  fileIds             String[]
+  checklist           Json // [{ item, done }]
+  submittedAt         DateTime  @default(now())
+  revisionRequest     String?
   revisionRequestedAt DateTime?
 }
 
@@ -502,9 +517,13 @@ model PaymentInstruction {
   assignment     Assignment @relation(fields: [assignmentId], references: [id])
   reference      String     @unique
   amount         Int
-  channel        String?    // BANK, TELEBIRR, CBE_BIRR
+  channel        String? // BANK, TELEBIRR, CBE_BIRR
   status         String     @default("PENDING") // PENDING, CONFIRMED, FAILED, CANCELLED
   providerRef    String?
+  // How to pay, as returned by the escrow provider (FR-ESC-01).
+  instructionsEn String?
+  instructionsAm String?
+  checkoutUrl    String?
   confirmedAt    DateTime?
   createdAt      DateTime   @default(now())
 }
@@ -518,10 +537,10 @@ model Settlement {
   commission     Int
   net            Int
   refundAmount   Int       @default(0)
-  kind           String    // RELEASE, REFUND, SPLIT
+  kind           String // RELEASE, REFUND, SPLIT
   status         String    @default("INSTRUCTED") // INSTRUCTED, PAID, FAILED
   instructionRef String    @unique
-  reason         String    // ACCEPTED, REVIEW_WINDOW_EXPIRED, DISPUTE_DECISION, CANCELLED_BY_AGREEMENT
+  reason         String // ACCEPTED, REVIEW_WINDOW_EXPIRED, DISPUTE_DECISION, CANCELLED_BY_AGREEMENT
   createdAt      DateTime  @default(now())
   paidAt         DateTime?
 }
@@ -531,7 +550,7 @@ model Settlement {
 model EscrowInstruction {
   id             String   @id @default(cuid())
   idempotencyKey String   @unique
-  kind           String   // COLLECT, RELEASE, REFUND, SPLIT, FREEZE, UNFREEZE
+  kind           String // COLLECT, RELEASE, REFUND, SPLIT, FREEZE, UNFREEZE
   assignmentRef  String
   payload        Json
   provider       String
@@ -545,50 +564,50 @@ model EscrowInstruction {
 // ---------------------------------------------------------------------------
 
 model Dispute {
-  id             String     @id @default(cuid())
-  ref            String     @unique
-  assignmentId   String
-  assignment     Assignment @relation(fields: [assignmentId], references: [id])
-  milestoneId    String
-  openedById     String
-  openedByRole   String
-  reason         String
-  amountDisputed Int
-  stage          String     @default("INTAKE") // INTAKE, FACILITATION, DECISION, APPEAL, CLOSED
-  ownerId        String?
-  evidence       Json
-  remedy         String?    // CORRECTION, PARTIAL_ACCEPTANCE, MILESTONE_ADJUSTMENT, REFUND, REASSIGNMENT, RELEASE_IN_FULL
-  accountAction  String?    // optional account action recorded with the remedy (ACCOUNT_ACTION)
-  releaseAmount  Int?
-  refundAmount   Int?
-  decisionNote   String?
-  decidedById    String?
-  decidedAt      DateTime?
-  approvalId     String?
-  decisionStatus String?    // PENDING_APPROVAL, APPROVED, EXECUTED, REJECTED
-  appealBy       DateTime?
-  appealedAt     DateTime?
-  appealedById   String?
-  appealReason   String?
-  finalDecision  Boolean    @default(false)
+  id               String        @id @default(cuid())
+  ref              String        @unique
+  assignmentId     String
+  assignment       Assignment    @relation(fields: [assignmentId], references: [id])
+  milestoneId      String
+  openedById       String
+  openedByRole     String
+  reason           String
+  amountDisputed   Int
+  stage            String        @default("INTAKE") // INTAKE, FACILITATION, DECISION, APPEAL, CLOSED
+  ownerId          String?
+  evidence         Json
+  remedy           String? // CORRECTION, PARTIAL_ACCEPTANCE, MILESTONE_ADJUSTMENT, REFUND, REASSIGNMENT, RELEASE_IN_FULL
+  accountAction    String? // optional account action recorded with the remedy (ACCOUNT_ACTION)
+  releaseAmount    Int?
+  refundAmount     Int?
+  decisionNote     String?
+  decidedById      String?
+  decidedAt        DateTime?
+  approvalId       String?
+  decisionStatus   String? // PENDING_APPROVAL, APPROVED, EXECUTED, REJECTED
+  appealBy         DateTime?
+  appealedAt       DateTime?
+  appealedById     String?
+  appealReason     String?
+  finalDecision    Boolean       @default(false)
   clientAcceptedAt DateTime?
   talentAcceptedAt DateTime?
-  alertsSent     String[]
-  closedAt       DateTime?
-  createdAt      DateTime   @default(now())
-  notes          DisputeNote[]
+  alertsSent       String[]
+  closedAt         DateTime?
+  createdAt        DateTime      @default(now())
+  notes            DisputeNote[]
 }
 
 model DisputeNote {
-  id        String   @id @default(cuid())
-  disputeId String
-  dispute   Dispute  @relation(fields: [disputeId], references: [id])
-  authorId  String
-  authorRole String  // CLIENT, TALENT or STAFF
-  internal  Boolean  @default(false) // staff-only notes
-  body      String
-  fileIds   String[]
-  at        DateTime @default(now())
+  id         String   @id @default(cuid())
+  disputeId  String
+  dispute    Dispute  @relation(fields: [disputeId], references: [id])
+  authorId   String
+  authorRole String // CLIENT, TALENT or STAFF
+  internal   Boolean  @default(false) // staff-only notes
+  body       String
+  fileIds    String[]
+  at         DateTime @default(now())
 }
 
 // ---------------------------------------------------------------------------
@@ -596,21 +615,21 @@ model DisputeNote {
 // ---------------------------------------------------------------------------
 
 model Rating {
-  id           String     @id @default(cuid())
-  assignmentId String
-  assignment   Assignment @relation(fields: [assignmentId], references: [id])
-  raterId      String
-  rateeId      String
-  direction    String     // CLIENT_TO_TALENT or TALENT_TO_CLIENT
-  scores       Json
-  average      Float
-  comment      String?
-  reply        String?
-  repliedAt    DateTime?
-  publishedAt  DateTime?
+  id            String     @id @default(cuid())
+  assignmentId  String
+  assignment    Assignment @relation(fields: [assignmentId], references: [id])
+  raterId       String
+  rateeId       String
+  direction     String // CLIENT_TO_TALENT or TALENT_TO_CLIENT
+  scores        Json
+  average       Float
+  comment       String?
+  reply         String?
+  repliedAt     DateTime?
+  publishedAt   DateTime?
   removedReason String?
-  removedById  String?
-  createdAt    DateTime   @default(now())
+  removedById   String?
+  createdAt     DateTime   @default(now())
 
   @@unique([assignmentId, direction])
 }
@@ -620,17 +639,17 @@ model Rating {
 // ---------------------------------------------------------------------------
 
 model Message {
-  id           String     @id @default(cuid())
-  assignmentId String
-  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  id             String     @id @default(cuid())
+  assignmentId   String
+  assignment     Assignment @relation(fields: [assignmentId], references: [id])
   // Each thread is between the client and one talent; before agreement every
   // invited talent has their own thread with the client.
   threadTalentId String
-  senderId     String
-  body         String
-  fileIds      String[]
-  masked       Boolean    @default(false)
-  createdAt    DateTime   @default(now())
+  senderId       String
+  body           String
+  fileIds        String[]
+  masked         Boolean    @default(false)
+  createdAt      DateTime   @default(now())
 
   @@index([assignmentId, threadTalentId, createdAt])
 }
@@ -642,6 +661,8 @@ model Notification {
   type      String
   title     String
   body      String
+  // Template variables, so past notifications can be shown in the user's current language.
+  vars      Json?
   link      String?
   channels  String[]
   readAt    DateTime?
@@ -652,7 +673,7 @@ model Notification {
 
 model OutboundMessage {
   id        String   @id @default(cuid())
-  channel   String   // SMS, EMAIL, TELEGRAM
+  channel   String // SMS, EMAIL, TELEGRAM
   to        String
   body      String
   status    String   @default("QUEUED")
@@ -666,26 +687,26 @@ model OutboundMessage {
 // ---------------------------------------------------------------------------
 
 model Ticket {
-  id              String    @id @default(cuid())
-  ref             String    @unique
-  requesterId     String?
-  createdById     String
-  source          String    // APP, CALL_LINE, ASSISTED_DESK
-  category        String
-  subject         String
-  description     String
-  ownerId         String?
-  status          String    @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
-  confidential    Boolean   @default(false)
-  safeguardingType String?  // HARASSMENT, EXPLOITATION, DISCRIMINATION, FRAUD
-  acknowledgeBy   DateTime?
-  acknowledgedAt  DateTime?
-  resolvedAt      DateTime?
-  outcome         String?
-  assignmentId    String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  updates         TicketUpdate[]
+  id               String         @id @default(cuid())
+  ref              String         @unique
+  requesterId      String?
+  createdById      String
+  source           String // APP, CALL_LINE, ASSISTED_DESK
+  category         String
+  subject          String
+  description      String
+  ownerId          String?
+  status           String         @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  confidential     Boolean        @default(false)
+  safeguardingType String? // HARASSMENT, EXPLOITATION, DISCRIMINATION, FRAUD
+  acknowledgeBy    DateTime?
+  acknowledgedAt   DateTime?
+  resolvedAt       DateTime?
+  outcome          String?
+  assignmentId     String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  updates          TicketUpdate[]
 }
 
 model TicketUpdate {
@@ -703,39 +724,55 @@ model TicketUpdate {
 // ---------------------------------------------------------------------------
 
 model Parameter {
-  key         String   @id
-  value       Json
-  category    String   // FINANCIAL or OPERATIONAL
-  description String
+  key           String   @id
+  value         Json
+  category      String // FINANCIAL or OPERATIONAL
+  description   String
   effectiveFrom DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt     DateTime @updatedAt
 }
 
 model ParameterChange {
-  id           String    @id @default(cuid())
-  key          String
-  oldValue     Json?
-  newValue     Json
-  reason       String
+  id            String    @id @default(cuid())
+  key           String
+  oldValue      Json?
+  newValue      Json
+  reason        String
   requestedById String
-  requestedAt  DateTime  @default(now())
-  status       String    @default("PENDING") // PENDING, APPLIED, REJECTED
-  decidedById  String?
-  decidedAt    DateTime?
+  requestedAt   DateTime  @default(now())
+  status        String    @default("PENDING") // PENDING, APPLIED, REJECTED
+  decidedById   String?
+  decidedAt     DateTime?
 }
 
 // Maker-checker approvals for financial actions (FR-ESC-07, FR-DSP-05).
+// Groups of users allowed to transact live, approved by the Project Director (FR-ADM-07).
+model Cohort {
+  id               String    @id @default(cuid())
+  name             String    @unique
+  description      String?
+  // Highest assignment value for members, in santim; null leaves the client-level limit.
+  valueLimit       Int?
+  payLaterEligible Boolean   @default(false)
+  status           String    @default("PROPOSED") // PROPOSED, APPROVED, CLOSED
+  createdById      String
+  approvedById     String?
+  approvedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  members          User[]
+}
+
 model Approval {
-  id           String    @id @default(cuid())
-  kind         String    // DISPUTE_DECISION, MANUAL_RELEASE, MANUAL_REFUND
-  subjectId    String
-  payload      Json
+  id            String    @id @default(cuid())
+  kind          String // DISPUTE_DECISION, MANUAL_RELEASE, MANUAL_REFUND
+  subjectId     String
+  payload       Json
   requestedById String
-  requestedAt  DateTime  @default(now())
-  status       String    @default("PENDING") // PENDING, APPROVED, REJECTED
-  decidedById  String?
-  decidedAt    DateTime?
-  note         String?
+  requestedAt   DateTime  @default(now())
+  status        String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  decidedById   String?
+  decidedAt     DateTime?
+  note          String?
 }
 
 // Append-only, hash-chained (FR-ADM-05, NFR-SEC-07). A database trigger blocks
@@ -768,9 +805,9 @@ model FileObject {
   size       Int
   sha256     String
   scanStatus String   @default("PENDING") // PENDING, CLEAN, INFECTED, SKIPPED
-  purpose    String   // PORTFOLIO, DELIVERY, MESSAGE, EVIDENCE, TICKET, PHOTO
+  purpose    String // PORTFOLIO, DELIVERY, MESSAGE, EVIDENCE, TICKET, PHOTO
   // What the file is attached to, used for access checks on download.
-  linkedType String?  // ASSIGNMENT, TICKET, PORTFOLIO, CLIENT_PROFILE
+  linkedType String? // ASSIGNMENT, TICKET, PORTFOLIO, CLIENT_PROFILE
   linkedId   String?
   createdAt  DateTime @default(now())
 }

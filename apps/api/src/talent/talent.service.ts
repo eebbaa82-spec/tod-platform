@@ -77,6 +77,19 @@ export class TalentService {
     return { channel: updated.payoutChannel, masked: updated.payoutAccountMasked, accountName: updated.payoutAccountName, nameVerified: updated.payoutNameVerified };
   }
 
+  // Public profile photo (an image the talent uploads with purpose PHOTO), or null to remove it.
+  async setPhoto(userId: string, fileId: string | null) {
+    const profile = await this.ensureProfile(userId);
+    if (fileId) {
+      const f = await this.prisma.fileObject.findUnique({ where: { id: fileId } });
+      if (!f || f.ownerId !== userId || !f.mime.startsWith('image/')) throw fail.bad('PHOTO_INVALID', 'Choose a PNG, JPEG or WebP photo you uploaded.');
+      await this.files.link(userId, [fileId], 'PROFILE_PHOTO', profile.id);
+    }
+    await this.prisma.talentProfile.update({ where: { id: profile.id }, data: { photoFileId: fileId } });
+    await this.audit.log({ actorId: userId, action: 'PROFILE_PHOTO_SET', entityType: 'TalentProfile', entityId: profile.id, after: { fileId } });
+    return { photoFileId: fileId };
+  }
+
   async addPortfolio(userId: string, dto: PortfolioItemDto) {
     const profile = await this.ensureProfile(userId);
     if (!dto.url && !dto.fileId) throw fail.bad('PORTFOLIO_EMPTY', 'Add a link or a file.');
@@ -109,7 +122,7 @@ export class TalentService {
     return {
       userId: p.userId,
       name: p.user.verifiedName ?? p.user.displayName,
-      photoFileId: p.user.photoFileId,
+      photoFileId: p.photoFileId,
       verified: p.user.identityStatus === 'VERIFIED',
       provisional: p.user.identityStatus === 'PROVISIONAL',
       // Badge with masked identifier, e.g. "Verified FAN ID: 6302 XXXX XXXX 9718" (FR-KYC-05).

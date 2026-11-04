@@ -31,7 +31,7 @@ async function makeTalent(name: string, area: string, opts: { sex?: 'FEMALE' | '
   const t = await register(app, 'TALENT', name, { language: opts.language });
   await t.api.put('/talent/me', { headline: `${name}, ${area.toLowerCase()} specialist`, bio: 'Experienced and reliable.', skills: [area], hoursPerWeek: 30, workMode: 'REMOTE', disability: opts.disability });
   await t.api.post('/me/vetting/request');
-  await vet.post(`/dev/identity/${t.id}`, { status: 'VERIFIED', verifiedName: name, sex: opts.sex ?? 'MALE', dateOfBirth: opts.dob ?? '1999-05-01', fan: `${3000_0000_0000_0000 + fanSeq++}` });
+  await vet.post(`/dev/identity/${t.id}`, { status: 'VERIFIED', verifiedName: name, sex: opts.sex ?? 'MALE', dateOfBirth: opts.dob ?? '1999-05-01', bankReference: `${3000_0000_0000_0000 + fanSeq++}` });
   await t.api.put('/talent/me/payout', { channel: 'TELEBIRR', accountNumber: '0911223344', accountName: name });
   await vet.post(`/dev/vetting/${t.id}`, { status: 'APPROVED', tiers: [{ serviceAreaCode: area, tier: 'INTERMEDIATE', testScore: 82 }] });
   return t;
@@ -39,8 +39,8 @@ async function makeTalent(name: string, area: string, opts: { sex?: 'FEMALE' | '
 
 async function makeClient(name: string, level: 'VERIFIED_ENTERPRISE' | 'BASIC_ENTERPRISE' = 'VERIFIED_ENTERPRISE') {
   const c = await register(app, 'CLIENT', name);
-  await c.api.put('/clients/me', { level, enterpriseName: `${name} PLC`, tin: '0012345678', tradeLicenceNo: 'AA/123/2024', sector: 'Retail', subCity: 'Bole', staffSize: 6, referralSource: 'ASSOCIATION', womenLed: true });
-  await vet.post(`/dev/identity/${c.id}`, { status: 'VERIFIED', verifiedName: `${name} Owner`, sex: 'FEMALE', dateOfBirth: '1988-01-01', fan: `${4000_0000_0000_0000 + fanSeq++}` });
+  await c.api.put('/clients/me', { level, enterpriseName: `${name} PLC`, tin: '0012345678', tradeLicenceNo: 'AA/123/2024', establishedOn: '2019-05-01', beneficialOwner: `${name} Owner`, sector: 'Retail', subCity: 'Bole', staffSize: 6, referralSource: 'ASSOCIATION', womenLed: true });
+  await vet.post(`/dev/identity/${c.id}`, { status: 'VERIFIED', verifiedName: `${name} Owner`, sex: 'FEMALE', dateOfBirth: '1988-01-01', bankReference: `${4000_0000_0000_0000 + fanSeq++}` });
   if (level === 'VERIFIED_ENTERPRISE') await sup.post(`/clients/${c.id}/confirm-level`, { note: 'Trade licence and TIN checked' });
   return c;
 }
@@ -90,8 +90,8 @@ describe('Scenario 2: one account per identity', () => {
   it('blocks a second registration with the same Fayda identity', async () => {
     const a = await register(app, 'TALENT', 'First Person');
     const b = await register(app, 'TALENT', 'Second Person');
-    await vet.post(`/dev/identity/${a.id}`, { status: 'VERIFIED', fan: '5555666677778888', dateOfBirth: '1995-01-01' });
-    const res = await vet.post(`/dev/identity/${b.id}`, { status: 'VERIFIED', fan: '5555666677778888', dateOfBirth: '1995-01-01' }, 409);
+    await vet.post(`/dev/identity/${a.id}`, { status: 'VERIFIED', bankReference: '5555666677778888', dateOfBirth: '1995-01-01' });
+    const res = await vet.post(`/dev/identity/${b.id}`, { status: 'VERIFIED', bankReference: '5555666677778888', dateOfBirth: '1995-01-01' }, 409);
     expect(res.code).toBe('IDENTITY_DUPLICATE');
   });
 
@@ -112,7 +112,7 @@ describe('Scenario 3: provisional onboarding when Fayda is unavailable', () => {
     const limits = await prisma.parameter.findUniqueOrThrow({ where: { key: 'ASSIGNMENT_VALUE_LIMITS' } });
     expect((limits.value as any).PROVISIONAL).toBe(500000);
     await c.api.post('/assignments', { packageCode: 'DES-LOGO', brief: 'A logo for my shop please.' });
-    await vet.post(`/dev/identity/${c.id}`, { status: 'VERIFIED', fan: '7777000011112222', dateOfBirth: '1990-01-01' });
+    await vet.post(`/dev/identity/${c.id}`, { status: 'VERIFIED', bankReference: '7777000011112222', dateOfBirth: '1990-01-01' });
     const u = await prisma.user.findUniqueOrThrow({ where: { id: c.id } });
     expect(u.identityStatus).toBe('VERIFIED');
   });

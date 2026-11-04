@@ -60,7 +60,7 @@ function Approvals() {
                           [t('Requested', 'የተጠየቀበት'), date(ap.requestedAt, lang, true)],
                         ]}
                       />
-                      <Decide requestedById={ap.requestedById} path={`/disputes/approvals/${ap.id}`} onDone={(r: any) => done(r?.status === 'REJECTED' ? t('Decision sent back to the mediator.', 'ውሳኔው ተመልሷል።') : t('Decision approved. Both parties have been told.', 'ውሳኔው ጸድቋል።'))} />
+                      <Decide requestedById={ap.requestedById} requestedByName={ap.requestedByName} path={`/disputes/approvals/${ap.id}`} onDone={(r: any) => done(r?.status === 'REJECTED' ? t('Decision sent back to the mediator.', 'ውሳኔው ተመልሷል።') : t('Decision approved. Both parties have been told.', 'ውሳኔው ጸድቋል።'))} />
                     </li>
                   ))}
                 </ul>
@@ -88,7 +88,7 @@ function Approvals() {
                         <span className="text-stone-500">{t('Reason', 'ምክንያት')}:</span> {c.reason}
                       </p>
                       <p className="text-xs text-stone-500">{date(c.requestedAt, lang, true)}</p>
-                      <Decide requestedById={c.requestedById} path={`/admin/parameter-changes/${c.id}`} onDone={(r: any) => done(r?.status === 'REJECTED' ? t('Change rejected.', 'ለውጡ ውድቅ ሆኗል።') : t(`Change applied to ${c.key}.`, `ለውጡ በ${c.key} ተተግብሯል።`))} />
+                      <Decide requestedById={c.requestedById} requestedByName={c.requestedByName} path={`/admin/parameter-changes/${c.id}`} onDone={(r: any) => done(r?.status === 'REJECTED' ? t('Change rejected.', 'ለውጡ ውድቅ ሆኗል።') : t(`Change applied to ${c.key}.`, `ለውጡ በ${c.key} ተተግብሯል።`))} />
                     </li>
                   ))}
                 </ul>
@@ -103,7 +103,7 @@ function Approvals() {
   );
 }
 
-function Decide({ requestedById, path, onDone }: { requestedById: string; path: string; onDone: (r: unknown) => void }) {
+function Decide({ requestedById, requestedByName, path, onDone }: { requestedById: string; requestedByName?: string | null; path: string; onDone: (r: unknown) => void }) {
   const { t } = useLang();
   const { me } = useSession();
   const [note, setNote] = useState('');
@@ -115,7 +115,7 @@ function Decide({ requestedById, path, onDone }: { requestedById: string; path: 
   };
   return (
     <div className="mt-3 space-y-2 border-t border-stone-200 pt-3">
-      <p className="text-xs text-stone-500">{mine ? t('You requested this. Another approver must decide it.', 'ይህን የጠየቁት እርስዎ ነዎት። ሌላ አጽዳቂ መወሰን አለበት።') : t(`Requested by ${shortId(requestedById)}`, `የጠየቀው ${shortId(requestedById)}`)}</p>
+      <p className="text-xs text-stone-500">{mine ? t('You requested this. Another approver must decide it.', 'ይህን የጠየቁት እርስዎ ነዎት። ሌላ አጽዳቂ መወሰን አለበት።') : t(`Requested by ${requestedByName ?? shortId(requestedById)}`, `የጠየቀው ${requestedByName ?? shortId(requestedById)}`)}</p>
       {!mine && (
         <>
           <Field label={t('Note (optional; recommended when rejecting)', 'ማስታወሻ (አማራጭ)')}>

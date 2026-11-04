@@ -14,4 +14,10 @@ export default async function () {
   await prisma.$disconnect();
   execSync('npx prisma migrate deploy', { env, stdio: 'ignore' });
   execSync('npx ts-node --transpile-only prisma/seed.ts', { env, stdio: 'ignore' });
+  // Most suites exercise the regulated money flow without pilot cohorts; the
+  // v005 suite switches interim mode and cohort control on for its own tests.
+  const p2 = new PrismaClient({ datasourceUrl: url });
+  await p2.parameter.update({ where: { key: 'ESCROW_MODE' }, data: { value: 'REGULATED' } });
+  await p2.parameter.update({ where: { key: 'COHORT_CONTROL_ENABLED' }, data: { value: false } });
+  await p2.$disconnect();
 }

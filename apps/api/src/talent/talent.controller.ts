@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { CurrentUser, Public, Roles, SessionUser } from '../common/auth.decorators';
-import { PayoutAccountDto, PortfolioItemDto, UpdateTalentProfileDto } from './dto';
+import { PayoutAccountDto, PhotoDto, PortfolioItemDto, UpdateTalentProfileDto } from './dto';
 import { TalentService } from './talent.service';
 
 @Controller('talent')
@@ -17,6 +17,12 @@ export class TalentController {
   @Put('me')
   update(@CurrentUser() me: SessionUser, @Body() dto: UpdateTalentProfileDto) {
     return this.talent.update(me.id, dto);
+  }
+
+  @Roles('TALENT')
+  @Put('me/photo')
+  photo(@CurrentUser() me: SessionUser, @Body() dto: PhotoDto) {
+    return this.talent.setPhoto(me.id, dto.fileId ?? null);
   }
 
   @Roles('TALENT')

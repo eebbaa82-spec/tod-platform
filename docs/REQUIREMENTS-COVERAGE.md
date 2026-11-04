@@ -1,9 +1,10 @@
 # Requirement coverage
 
-Against the ToD Platform Requirements Definition V-002. Status key:
+Against the ToD Platform Requirements Definition V-005 (November 4, 2026).
+Requirements added since V-002 are listed under *New in V-005* at the end. Status key:
 
 * **Built**: implemented and, where marked ✔, exercised by an automated test.
-* **Developer**: part of the Fayda, vetting or escrow modules, behind the
+* **Developer**: part of the partner-bank identity, vetting or escrow modules, behind the
   interfaces in [DEVELOPER-INTEGRATION.md](DEVELOPER-INTEGRATION.md).
 * **Partly**: the data and hooks exist; the full feature is still to do.
 * **Later**: R2 to R4 items not started.
@@ -22,22 +23,24 @@ Against the ToD Platform Requirements Definition V-002. Status key:
 | FR-ACC-08 | Built | Deactivate, data export and logged erasure request |
 | FR-ACC-09 | Built ✔ | Under-18 refused on the verified date of birth |
 
-## 4.2 Identity verification (Fayda)
+## 4.2 Identity verification (through the partner bank)
 
 | ID | Status | Notes |
 | --- | --- | --- |
-| FR-KYC-01, 02, 06, 07, 09, 10, 11, 12 | Developer | Flow, consent, vault, queues, call counting |
-| FR-KYC-03 | Built | Only the needed attributes are stored |
-| FR-KYC-04 | Built ✔ | One account per identity token |
+| FR-KYC-01, 06, 09, 10, 11, 12 | Developer | Bank connector (IF-01), reference vault, queues, request counting |
+| FR-KYC-02 | Built ✔ | Consent recorded before every request; refused without it |
+| FR-KYC-07 | Built | No photograph or biometric field is received or stored |
+| FR-KYC-03 | Built | Only name, sex, date of birth, result and a token for the bank reference |
+| FR-KYC-04 | Built ✔ | One account per identity token derived from the bank customer reference |
 | FR-KYC-05 | Built ✔ | Badge and masked identifier |
-| FR-KYC-08 | Built | Every result audited with method and reference |
+| FR-KYC-08 | Built ✔ | Every request and result audited with method and reference |
 
 ## 4.3 Talent profile and tiering
 
 | ID | Status | Notes |
 | --- | --- | --- |
 | FR-TAL-01, 04, 05 | Built | Profile field groups, portfolio, availability and response time |
-| FR-TAL-02 | Built | Sex and age from Fayda; voluntary disability, displacement, other |
+| FR-TAL-02 | Built | Sex and age from the verified identity; voluntary disability, displacement, other |
 | FR-TAL-03 | Built ✔ | Restricted fields never on the public profile |
 | FR-TAL-06 | Built | Tier per service area; package minimum tier and concurrency enforced |
 | FR-TAL-07 | Developer | Promotion is a vetting outcome |
@@ -116,7 +119,7 @@ check is a hook in `AssignmentsService.assertNotInArrears`.
 
 | ID | Status | Notes |
 | --- | --- | --- |
-| FR-COM-01 | Built ✔ | 5% standard, 1% for Fayda-verified women or confirmed disability, snapshotted at agreement |
+| FR-COM-01 | Built ✔ | 5% standard, 1% for women with a verified identity or confirmed disability, snapshotted at agreement |
 | FR-COM-02 | Built ✔ | Parameters with effective dates and a second approver |
 | FR-COM-06 | Built | `TALENT_FEES_ENABLED` off |
 | FR-COM-03, 04, 05 | Later | |
@@ -189,3 +192,22 @@ check is a hook in `AssignmentsService.assertNotInArrears`.
 ## 4.18 Commercial operations
 
 FR-BIZ-01 to 15 are **Later** (R3 and R4).
+
+## New in V-005
+
+Requirements added since V-002.
+
+| ID | Release | Status | Notes |
+| --- | --- | --- | --- |
+| FR-TAL-12 | R1 | Built ✔ | "How did you hear about ToD?" channel and referring organisation on the talent profile |
+| FR-CLI-02, 03 | R1 | Built ✔ | Owner verified through the partner bank; verified enterprise needs date of establishment (not in the future) and beneficial owner |
+| FR-CLI-08 | R1 | Built ✔ | Voluntary women-led, youth-led and disability ownership flags at every client level |
+| FR-ESC-14 | R1 | Built ✔ | `ESCROW_MODE=INTERIM`: every release and refund waits for two different finance officers (Console, Interim payouts); assignments carry an "Interim escrow" label and a named case owner |
+| FR-DSP-09 | R1 | Built | Stage targets, intake timer, two-working-day alert and evidence lock |
+| FR-ADM-07 | R1 | Built ✔ | Pilot groups (Console, Pilot groups) approved by the super administrator; a proposal can only be accepted when both people are in an approved group, within its value limit |
+| FR-MEL-11, 12 | R1 | Built ✔ | Monthly GESI report (Console, Reports, GESI report) for the ten indicators, targets in `GESI_TARGETS`, flags in `GESI_FLAGS`, monthly flag notice to MEL officers |
+| BR-07 | R1 | Built | Basic and individual client limits set to 10,000 birr |
+| BR-16 | R1 | Built | Trust levels from completed work, rating, repeat clients and upheld disputes (`TRUST_THRESHOLDS`) |
+| BR-02 | R1 | Built | Inclusive 1% commission ends on `COMMISSION_INCLUSIVE_UNTIL` (22 Feb 2027) |
+| FR-TAL-08, BR-13, 14 | R2 | Later | Readiness index |
+| Pay-later | R2 | Partly | Cohort eligibility is stored; the feature itself is R2 |

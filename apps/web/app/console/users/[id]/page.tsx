@@ -6,7 +6,7 @@ import { KV, Notice, ReasonButton, ROLE_OPTIONS, roleLabel, shortId, StandInBann
 import { CONSOLE_ROLES } from '@/components/console-nav';
 import { RequireAuth } from '@/components/shell';
 import { Badge, Button, Card, Checkbox, ErrorText, Field, Input, PageTitle, Select, Spinner, StatusBadge, Table, Textarea, useAction } from '@/components/ui';
-import { post } from '@/lib/api';
+import { post, apiUrl } from '@/lib/api';
 import { date, humanise } from '@/lib/format';
 import { useLang } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
@@ -89,12 +89,12 @@ function UserDetail() {
               ]}
             />
           </Card>
-          <Card title={t('Identity (Fayda)', 'ማንነት (ፋይዳ)')}>
+          <Card title={t('Identity (partner bank)', 'ማንነት (አጋር ባንክ)')}>
             <KV
               items={[
                 [t('Status', 'ሁኔታ'), <StatusBadge key="s" status={u.identity.status} />],
                 [t('Verified name', 'የተረጋገጠ ስም'), u.identity.verifiedName],
-                [t('FAN (masked)', 'FAN (የተሸፈነ)'), u.identity.masked],
+                [t('ID (masked)', 'መታወቂያ (የተሸፈነ)'), u.identity.masked],
                 [t('Sex', 'ጾታ'), u.identity.sex ? humanise(u.identity.sex) : null],
                 [t('Date of birth', 'የትውልድ ቀን'), u.identity.dateOfBirth ? date(u.identity.dateOfBirth, lang) : null],
                 [t('Verified at', 'የተረጋገጠበት'), date(u.identity.verifiedAt, lang, true)],
@@ -154,7 +154,7 @@ function UserDetail() {
           <StandInBanner>
             <p className="mb-3 text-sm text-amber-900">
               {t(
-                "These forms stand in for the developer's Fayda identity and vetting modules while they are being built. They call the same integration points those modules will call, and they are switched off in production.",
+                "These forms stand in for the developer's partner-bank identity and vetting modules while they are being built. They call the same integration points those modules will call, and they are switched off in production.",
                 'እነዚህ ቅጾች የፋይዳ ማንነት እና የግምገማ ሞጁሎች እስኪሠሩ ድረስ ምትክ ናቸው። በምርት አካባቢ ይጠፋሉ።',
               )}
             </p>
@@ -237,7 +237,7 @@ function ClientCard({ userId, c, onDone }: { userId: string; c: any; onDone: (m:
             [t('Owned by a person with disability', 'በአካል ጉዳተኛ የተያዘ'), yn(c.pwdOwned, t)],
             [t('Referral', 'የመጣበት'), `${humanise(c.referralSource)}${c.referralDetail ? ` · ${c.referralDetail}` : ''}`],
             [t('Activity evidence', 'የሥራ ማስረጃ'), c.activityEvidence],
-            [t('Evidence file', 'የማስረጃ ፋይል'), c.evidenceFileId ? <a key="f" className="text-brand-700 hover:underline" href={`/api/files/${c.evidenceFileId}`} target="_blank" rel="noreferrer">{t('Open', 'ክፈት')}</a> : null],
+            [t('Evidence file', 'የማስረጃ ፋይል'), c.evidenceFileId ? <a key="f" className="text-brand-700 hover:underline" href={apiUrl(`/files/${c.evidenceFileId}`)} target="_blank" rel="noreferrer">{t('Open', 'ክፈት')}</a> : null],
           ]}
         />
       </div>
@@ -286,7 +286,7 @@ function RolesForm({ userId, roles, designated, onDone }: { userId: string; role
 
 function IdentityStandIn({ userId, u, onDone }: { userId: string; u: any; onDone: (m: string) => void }) {
   const { t } = useLang();
-  const [f, setF] = useState({ status: 'VERIFIED', verifiedName: u.identity.verifiedName ?? u.displayName, sex: u.identity.sex ?? '', dateOfBirth: u.identity.dateOfBirth?.slice(0, 10) ?? '', fan: '' });
+  const [f, setF] = useState({ status: 'VERIFIED', verifiedName: u.identity.verifiedName ?? u.displayName, sex: u.identity.sex ?? '', dateOfBirth: u.identity.dateOfBirth?.slice(0, 10) ?? '', bankReference: '' });
   const a = useAction();
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
   return (
@@ -298,13 +298,13 @@ function IdentityStandIn({ userId, u, onDone }: { userId: string; u: any; onDone
         if (f.verifiedName) body.verifiedName = f.verifiedName;
         if (f.sex) body.sex = f.sex;
         if (f.dateOfBirth) body.dateOfBirth = f.dateOfBirth;
-        if (f.fan) body.fan = f.fan;
+        if (f.bankReference) body.bankReference = f.bankReference;
         const r: any = await a.run(() => post(`/dev/identity/${userId}`, body));
         if (r) onDone(t(`Identity result applied: ${r.identityStatus}.`, `የማንነት ውጤት ተተግብሯል፦ ${r.identityStatus}።`));
       }}
     >
       <p className="font-semibold">{t('Set identity result', 'የማንነት ውጤት አዘጋጅ')}</p>
-      <p className="text-xs text-stone-600">{t('Stands in for the Fayda eKYC check.', 'ለፋይዳ ማረጋገጫ ምትክ።')}</p>
+      <p className="text-xs text-stone-600">{t('Stands in for the identity check with the partner bank.', 'ከአጋር ባንክ ጋር ለሚደረገው የማንነት ማረጋገጫ ምትክ።')}</p>
       <Field label={t('Result', 'ውጤት')}>
         <Select value={f.status} onChange={set('status')} options={['VERIFIED', 'PROVISIONAL', 'FAILED'].map((s) => ({ value: s, label: humanise(s) }))} />
       </Field>
@@ -319,8 +319,8 @@ function IdentityStandIn({ userId, u, onDone }: { userId: string; u: any; onDone
           <Input type="date" value={f.dateOfBirth} onChange={set('dateOfBirth')} />
         </Field>
       </div>
-      <Field label="FAN" hint={t('Optional. A test number is made from the phone if left empty.', 'አማራጭ።')}>
-        <Input value={f.fan} onChange={set('fan')} inputMode="numeric" />
+      <Field label={t('Bank customer reference', 'የባንክ ደንበኛ መለያ')} hint={t('Optional. A test number is made from the phone if left empty.', 'አማራጭ።')}>
+        <Input value={f.bankReference} onChange={set('bankReference')} inputMode="numeric" />
       </Field>
       <ErrorText error={a.error} />
       <Button type="submit" tone="secondary" busy={a.busy}>

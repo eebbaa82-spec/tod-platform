@@ -44,3 +44,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build -w apps/web
+
+  images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --target api -t tod-api .
+      - run: docker build --target web -t tod-web .

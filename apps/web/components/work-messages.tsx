@@ -14,15 +14,15 @@ export function MessagesPanel({ a, talentId, setTalentId }: { a: any; talentId: 
   const { t } = useLang();
   const role = a.viewerRole as string;
   const choosing = role === 'CLIENT' && !a.talentId;
-  const threads = useApi<{ talentId: string; count: number; lastAt: string }[]>(choosing ? `/assignments/${a.id}/messages/threads` : null);
+  const threads = useApi<{ talentId: string; name: string | null; count: number; lastAt: string | null }[]>(choosing ? `/assignments/${a.id}/messages/threads` : null);
 
-  // Talents the client may write to before agreement: those who sent offers, plus any thread already started.
+  // Talents the client may write to before agreement: those who sent offers, plus every invited talent.
   const names = new Map<string, string>();
   for (const p of a.proposals ?? []) names.set(p.talentId, p.talent?.name ?? '');
   const options: { value: string; label: string }[] = [];
   if (choosing) {
     for (const [id, name] of names) options.push({ value: id, label: name });
-    for (const th of threads.data ?? []) if (!names.has(th.talentId)) options.push({ value: th.talentId, label: t('Invited talent', 'የተጋበዘ ባለሙያ') });
+    for (const th of threads.data ?? []) if (!names.has(th.talentId)) options.push({ value: th.talentId, label: th.name ? `${th.name} · ${t('invited', 'የተጋበዘ')}` : t('Invited talent', 'የተጋበዘ ባለሙያ') });
   }
 
   const effective = role === 'CLIENT' ? (a.talentId ?? talentId) : role === 'STAFF' ? a.talentId : null;
@@ -40,7 +40,7 @@ export function MessagesPanel({ a, talentId, setTalentId }: { a: any; talentId: 
       {choosing && (
         <div className="mb-3">
           {options.length === 0 ? (
-            <Empty>{t('You can message a talent once they send an offer.', 'ባለሙያው ቅናሽ ሲልክ መልእክት መላክ ይችላሉ።')}</Empty>
+            <Empty>{t('You can message talents here once they are invited.', 'ባለሙያዎች ሲጋበዙ እዚህ መልእክት መላክ ይችላሉ።')}</Empty>
           ) : (
             <Select aria-label={t('Talk to', 'ያነጋግሩ')} value={talentId ?? ''} onChange={(e) => setTalentId(e.target.value)} options={options} />
           )}

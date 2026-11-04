@@ -224,12 +224,14 @@ function Notes({ d, reload }: { d: any; reload: () => void }) {
               return (
                 <li key={n.id} className={`rounded-lg p-3 text-sm ${n.authorRole === 'STAFF' ? 'bg-sky-50' : mine ? 'bg-brand-50' : 'bg-stone-50'}`}>
                   <p className="text-xs font-semibold text-stone-600">
-                    {mine ? t('You', 'እርስዎ') : roleLabel(n.authorRole, t)} · <span className="font-normal">{date(n.at, lang, true)}</span>
+                    {mine ? t('You', 'እርስዎ') : n.authorRole === 'STAFF' ? (n.authorName ?? t('ToD case officer', 'የToD ጉዳይ ኃላፊ')) : `${n.authorName ? `${n.authorName} · ` : ''}${roleLabel(n.authorRole, t)}`} · <span className="font-normal">{date(n.at, lang, true)}</span>
                   </p>
                   <p className="mt-1 whitespace-pre-wrap">{n.body}</p>
-                  {n.fileIds?.length > 0 && (
+                  {(n.files?.length > 0 || n.fileIds?.length > 0) && (
                     <div className="mt-1 flex flex-wrap gap-3">
-                      {n.fileIds.map((f: string, i: number) => <FileLink key={f} id={f} name={t(`Evidence ${i + 1}`, `ማስረጃ ${i + 1}`)} />)}
+                      {n.files?.length > 0
+                        ? n.files.map((f: { id: string; name: string }) => <FileLink key={f.id} id={f.id} name={f.name} />)
+                        : n.fileIds.map((f: string, i: number) => <FileLink key={f} id={f} name={t(`Evidence ${i + 1}`, `ማስረጃ ${i + 1}`)} />)}
                     </div>
                   )}
                 </li>

@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { get } from '@/lib/api';
+import { get, BASE } from '@/lib/api';
 import { useLang } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
 import { ReportConcern } from './report-concern';
@@ -16,8 +16,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!me) return;
-    get<{ unreadCount: number }>('/notifications?unread=1').then((r) => setUnread(r.unreadCount ?? 0)).catch(() => {});
-  }, [me, path]);
+    get<{ unreadCount: number }>(`/notifications?unread=1&lang=${lang}`).then((r) => setUnread(r.unreadCount ?? 0)).catch(() => {});
+  }, [me, path, lang]);
   useEffect(() => setMenu(false), [path]);
 
   const links: { href: string; label: string }[] = [];
@@ -103,7 +103,7 @@ export function RequireAuth({ roles, children }: { roles?: string[]; children: R
   const { t } = useLang();
   const path = usePathname();
   useEffect(() => {
-    if (!loading && !me) window.location.href = `/login?next=${encodeURIComponent(path)}`;
+    if (!loading && !me) window.location.href = `${BASE}/login?next=${encodeURIComponent(path)}`;
   }, [loading, me, path]);
   if (loading || !me) return <div className="py-10 text-center text-sm text-stone-500">{t('Loading…', 'በመጫን ላይ…')}</div>;
   if (roles && !has(...roles)) return <p className="py-10 text-center text-sm text-stone-600">{t('This page is not available for your account.', 'ይህ ገጽ ለመለያዎ አይገኝም።')}</p>;

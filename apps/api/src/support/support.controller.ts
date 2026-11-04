@@ -17,6 +17,9 @@ class ReportDto {
   @IsString() @MinLength(5) @MaxLength(5000) description: string;
   @IsOptional() @IsString() assignmentId?: string;
   @IsOptional() @IsArray() @IsString({ each: true }) fileIds?: string[];
+  // Designated staff logging a report on behalf of a caller.
+  @IsOptional() @IsIn(['CALL_LINE', 'ASSISTED_DESK']) source?: string;
+  @IsOptional() @IsString() requesterPhone?: string;
 }
 class UpdateDto {
   @IsOptional() @IsString() status?: string;
@@ -24,6 +27,7 @@ class UpdateDto {
   @IsOptional() @IsString() @MaxLength(5000) body?: string;
   @IsOptional() @IsBoolean() internal?: boolean;
   @IsOptional() @IsString() @MaxLength(3000) outcome?: string;
+  @IsOptional() @IsArray() @IsString({ each: true }) fileIds?: string[];
 }
 
 @Controller('support')

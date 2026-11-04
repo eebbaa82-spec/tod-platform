@@ -37,4 +37,8 @@ export const config = {
   get webOrigin() {
     return process.env.WEB_ORIGIN ?? 'http://localhost:3000';
   },
+  /** Sub-path the site is served under (e.g. /tod); the session cookie is limited to it. */
+  get cookiePath() {
+    return (process.env.BASE_PATH ?? '').replace(/\/+$/, '') || '/';
+  },
 };

@@ -1,6 +1,7 @@
 import { Controller, Get, Query, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { CurrentUser, Roles, SessionUser } from '../common/auth.decorators';
+import { GesiService } from './gesi.service';
 import { ReportFilter, ReportsService } from './reports.service';
 
 const READERS = ['MEL_OFFICER', 'PLATFORM_ADMIN', 'SUPER_ADMIN', 'AUDITOR', 'PARTNER_VIEWER'] as const;
@@ -8,7 +9,13 @@ const READERS = ['MEL_OFFICER', 'PLATFORM_ADMIN', 'SUPER_ADMIN', 'AUDITOR', 'PAR
 @Controller('reports')
 @Roles(...READERS)
 export class ReportsController {
-  constructor(private readonly reports: ReportsService) {}
+  constructor(private readonly reports: ReportsService, private readonly gesi: GesiService) {}
+
+  // Monthly GESI indicators against the group targets (FR-MEL-11, FR-MEL-12).
+  @Get('gesi')
+  gesiReport(@Query('month') month?: string) {
+    return this.gesi.report(month);
+  }
 
   @Get('indicators')
   indicators(@Query() f: ReportFilter) {

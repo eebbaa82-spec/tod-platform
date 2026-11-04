@@ -66,17 +66,29 @@ export class SupportService {
     return t;
   }
 
-  async report(me: SessionUser, input: { type: string; description: string; assignmentId?: string; fileIds?: string[] }) {
+  async report(me: SessionUser, input: { type: string; description: string; assignmentId?: string; fileIds?: string[]; source?: string; requesterPhone?: string }) {
     if (!SAFEGUARDING_TYPES.includes(input.type)) throw fail.bad('BAD_TYPE', 'Choose what you are reporting.');
+    // Designated staff may log a case for someone who called or came to the desk.
+    let requesterId: string | null = me.id;
+    let source = 'APP';
+    if (input.source && input.source !== 'APP') {
+      if (!(await this.designated(me))) throw fail.forbidden('NOT_DESIGNATED', 'Only designated staff can log a confidential case for someone else.');
+      source = input.source;
+      requesterId = null;
+      if (input.requesterPhone) {
+        const u = await this.prisma.user.findUnique({ where: { phone: normalisePhone(input.requesterPhone) } });
+        requesterId = u?.id ?? null;
+      }
+    }
     const days = await this.params.get<number>('MANUAL_REVIEW_TARGET_WORKING_DAYS');
     const ackBy = addWorkingDays(this.clock.now(), days, await this.params.holidays());
     const ref = await this.sequence.next('case', 'TODC');
     const t = await this.prisma.ticket.create({
-      data: { ref, requesterId: me.id, createdById: me.id, source: 'APP', category: 'SAFEGUARDING', subject: `Confidential report: ${input.type.toLowerCase()}`, description: input.description, confidential: true, safeguardingType: input.type, acknowledgeBy: ackBy, assignmentId: input.assignmentId },
+      data: { ref, requesterId, createdById: me.id, source, ownerId: source !== 'APP' ? me.id : null, category: 'SAFEGUARDING', subject: `Confidential report: ${input.type.toLowerCase()}`, description: input.description, confidential: true, safeguardingType: input.type, acknowledgeBy: ackBy, assignmentId: input.assignmentId },
     });
     if (input.fileIds?.length) await this.files.link(me.id, input.fileIds, 'TICKET', t.id);
     // The audit log records that a case exists, not its content.
-    await this.audit.log({ actorId: me.id, action: 'SAFEGUARDING_CASE_OPENED', entityType: 'Ticket', entityId: t.id, after: { ref, type: input.type } });
+    await this.audit.log({ actorId: me.id, action: 'SAFEGUARDING_CASE_OPENED', entityType: 'Ticket', entityId: t.id, after: { ref, type: input.type, source } });
     const staff = await this.prisma.user.findMany({ where: { status: 'ACTIVE', safeguardingDesignated: true }, select: { id: true } });
     for (const s of staff) await this.notifications.notify(s.id, 'STAFF_ALERT', { subject: `Confidential case ${ref}`, detail: `Acknowledge by ${ackBy.toISOString().slice(0, 10)}.` }, { sms: true, link: `/console/tickets/${t.id}` });
     return { id: t.id, ref, acknowledgeBy: ackBy };
@@ -103,10 +115,22 @@ export class SupportService {
     if (t.confidential && !own && !(await this.designated(me))) throw fail.notFound('Ticket');
     if (!own && !this.isAgent(me)) throw fail.notFound('Ticket');
     const files = await this.prisma.fileObject.findMany({ where: { linkedType: 'TICKET', linkedId: id }, select: { id: true, name: true, size: true } });
-    return { ...t, updates: own && !this.isAgent(me) ? t.updates.filter((u) => !u.internal) : t.updates, files };
+    const agent = this.isAgent(me);
+    const updates = own && !agent ? t.updates.filter((u) => !u.internal) : t.updates;
+    const authors = await this.prisma.user.findMany({ where: { id: { in: [...new Set(updates.map((u) => u.authorId))] } }, select: { id: true, displayName: true, verifiedName: true } });
+    return {
+      ...t,
+      updates: updates.map((u) => {
+        const a = authors.find((x) => x.id === u.authorId);
+        // The requester sees their own name and "ToD support" (null) for staff.
+        const authorName = agent || u.authorId === me.id ? (a?.verifiedName ?? a?.displayName ?? null) : null;
+        return { ...u, authorName, mine: u.authorId === me.id };
+      }),
+      files,
+    };
   }
 
-  async update(me: SessionUser, id: string, input: { status?: string; ownerId?: string; body?: string; internal?: boolean; outcome?: string }) {
+  async update(me: SessionUser, id: string, input: { status?: string; ownerId?: string; body?: string; internal?: boolean; outcome?: string; fileIds?: string[] }) {
     const t = await this.prisma.ticket.findUnique({ where: { id } });
     if (!t) throw fail.notFound('Ticket');
     const own = t.requesterId === me.id;
@@ -128,11 +152,19 @@ export class SupportService {
       if (input.ownerId) data.ownerId = input.ownerId;
       if (input.outcome) data.outcome = input.outcome;
       if (!t.ownerId && !input.ownerId) data.ownerId = me.id;
+    } else if (input.status) {
+      // A requester may close their own ordinary ticket, or reopen it. Confidential cases close only through staff.
+      if (t.confidential || !['CLOSED', 'OPEN'].includes(input.status)) throw fail.forbidden('NOT_ALLOWED', 'You can close or reopen your own ticket only.');
+      data.status = input.status;
+      if (input.status === 'CLOSED') data.resolvedAt = t.resolvedAt ?? now;
     }
     await this.prisma.ticket.update({ where: { id }, data });
+    if (input.fileIds?.length) await this.files.link(me.id, input.fileIds, 'TICKET', id);
     if (input.body) await this.prisma.ticketUpdate.create({ data: { ticketId: id, authorId: me.id, body: input.body, internal: agent && !!input.internal } });
     await this.audit.log({ actorId: me.id, action: 'TICKET_UPDATED', entityType: 'Ticket', entityId: id, before: { status: t.status }, after: { status: input.status, owner: input.ownerId, hasNote: !!input.body } });
     if (agent && t.requesterId && input.body && !input.internal) await this.notifications.notify(t.requesterId, 'TICKET_UPDATE', { ref: t.ref }, { link: `/help/${id}` });
+    // Tell the owner when the requester replies.
+    if (!agent && t.ownerId && input.body) await this.notifications.notify(t.ownerId, 'STAFF_ALERT', { subject: `Reply on ${t.ref}`, detail: t.confidential ? 'New reply on a confidential case.' : input.body.slice(0, 140) }, { link: `/console/tickets/${id}` });
     return this.get(me, id);
   }
 

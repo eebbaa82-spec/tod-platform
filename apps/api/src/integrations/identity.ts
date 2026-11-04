@@ -9,29 +9,40 @@ import { PrismaService } from '../common/prisma.service';
 import { PublicationService } from './publication';
 
 // ============================================================================
-// DEVELOPER INTEGRATION POINT: Fayda identity verification (section 4.2)
+// DEVELOPER INTEGRATION POINT: identity verification through the partner bank
+// (Requirements Definition V-005, section 4.2 and interface IF-01)
 // ============================================================================
-// The Fayda eKYC module (VeriFayda / eSignet relying-party flow, consent
-// capture, encrypted identifier vault, manual-verification queue, retries)
-// is built by the integration developer. When a verification finishes, that
-// module calls IdentityResultService.apply() with the outcome. The
-// marketplace never sees the authentic FIN/FAN: only an internal token and the
-// masked form (FR-KYC-05, FR-KYC-06).
+// The platform does not connect to Fayda. With the user's consent it asks the
+// partner bank to confirm that the user holds an active account in their own
+// name; the bank activates accounts only after Fayda verification, so that
+// confirmation is the proof of identity (FR-KYC-01).
+//
+// The bank connector (signed API call, encrypted vault for the bank customer
+// reference, retries, manual-verification queue) is built by the integration
+// developer. When a check finishes, it calls IdentityResultService.apply()
+// with the outcome. The marketplace never holds the bank customer reference or
+// a national identifier in clear: only an internal token derived from the
+// reference and, if the bank supplies an identifier, its masked form
+// (FR-KYC-04 to 06). Photographs and biometrics are never received (FR-KYC-03, 07).
 //
 // The interface below is what the rest of the platform depends on.
 
 export interface IdentityResult {
   userId: string;
   status: Extract<IdentityStatus, 'VERIFIED' | 'PROVISIONAL' | 'FAILED' | 'PENDING'>;
-  // Internal, stable token for the person; used to enforce one account per identity.
+  // Internal, stable token derived from the bank customer reference; used to
+  // enforce one account per identity (FR-KYC-04). Never the reference itself.
   identityToken?: string;
-  // The FAN or FIN in clear text is passed only so this service can mask it; it is never stored here.
+  // Identifier supplied by the bank, if any, passed in clear only so this
+  // service can mask it (FR-KYC-05); it is never stored here.
   identifierForMasking?: string;
   verifiedName?: string;
   sex?: Sex;
   dateOfBirth?: Date;
-  photoFileId?: string;
-  method: 'FAYDA_OTP' | 'FAYDA_BIOMETRIC' | 'MANUAL_PROVISIONAL' | 'TEST_STAND_IN';
+  // PARTNER_BANK: account check through the bank's API.
+  // PARTNER_BANK_APP: stronger confirmation in the bank's own app (FR-KYC-11).
+  method: 'PARTNER_BANK' | 'PARTNER_BANK_APP' | 'MANUAL_PROVISIONAL' | 'TEST_STAND_IN';
+  // Request reference for the audit trail (not the bank customer reference).
   reference?: string;
 }
 
@@ -41,13 +52,13 @@ export interface IdentityVerificationProvider {
   start(userId: string): Promise<{ status: 'PENDING'; redirectUrl?: string; message?: string }>;
 }
 
-// Placeholder used until the Fayda module is connected. It does nothing except
+// Placeholder used until the partner-bank connector is in place. It does nothing except
 // mark the request as pending; staff can complete it with the test stand-in.
 @Injectable()
 export class PendingIdentityProvider implements IdentityVerificationProvider {
   readonly name = 'not-connected';
   async start() {
-    return { status: 'PENDING' as const, message: 'Identity verification with Fayda is not connected yet. Staff will complete it.' };
+    return { status: 'PENDING' as const, message: 'Your request has been received. Staff will confirm your identity with the partner bank and let you know.' };
   }
 }
 
@@ -89,7 +100,6 @@ export class IdentityResultService {
       verifiedName: r.verifiedName ?? user.verifiedName,
       sex: r.sex ?? user.sex,
       dateOfBirth: r.dateOfBirth ?? user.dateOfBirth,
-      photoFileId: r.photoFileId ?? user.photoFileId,
       identityVerifiedAt: r.status === 'VERIFIED' ? this.clock.now() : user.identityVerifiedAt,
     };
     const updated = await this.prisma.user.update({ where: { id: r.userId }, data });

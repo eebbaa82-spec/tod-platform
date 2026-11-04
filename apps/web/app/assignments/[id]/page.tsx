@@ -106,7 +106,7 @@ function Header({ a }: { a: any }) {
 
   return (
     <div>
-      <PageTitle sub={a.ref} actions={<AssignmentStatus status={a.status} />}>
+      <PageTitle sub={a.ref} actions={<div className="flex flex-wrap items-center gap-2">{a.interim && <Badge tone="amber">{t('Interim escrow', 'ጊዜያዊ ዕግድ')}</Badge>}<AssignmentStatus status={a.status} /></div>}>
         {a.title}
       </PageTitle>
       <Card>
@@ -161,11 +161,13 @@ function PaymentPanel({ a, accepted }: { a: any; accepted: any }) {
   if (!pay) {
     return <Alert tone="info">{t('Your payment details are being prepared. Refresh this page in a moment.', 'የክፍያ ዝርዝሮችዎ እየተዘጋጁ ነው። ትንሽ ቆይተው ገጹን ያድሱ።')}</Alert>;
   }
-  const instructions = lang === 'am' ? accepted?.instructionsAm ?? accepted?.instructionsEn : accepted?.instructionsEn;
+  // Instructions are saved with the payment, so they show again after a reload.
+  const instructions = lang === 'am' ? pay.instructionsAm ?? pay.instructionsEn : pay.instructionsEn;
   return (
     <Card title={t('Next step: pay into escrow', 'ቀጣይ ደረጃ፦ ለአጋር ባንኩ ይክፈሉ')}>
       <div className="space-y-3 text-sm">
         <p>{t('Pay the amount below to the partner bank. The bank holds the money safely. The talent is paid only after you accept the work.', 'ከታች ያለውን መጠን ለአጋር ባንኩ ይክፈሉ። ባንኩ ገንዘቡን በጥንቃቄ ይይዛል። ባለሙያው የሚከፈለው ሥራውን ከተቀበሉ በኋላ ብቻ ነው።')}</p>
+        {a.interim && <Alert tone="warning">{t('Pilot arrangement: until regulated escrow is in place, the money is held in a separate consortium account. Two finance officers must approve every payout or refund.', 'የሙከራ ዝግጅት፦ ተቆጣጣሪ ዕግድ እስኪዘጋጅ ድረስ ገንዘቡ በተለየ የጥምረቱ ሂሳብ ይያዛል። እያንዳንዱን ክፍያ ወይም ተመላሽ ሁለት የፋይናንስ ባለሙያዎች ማጽደቅ አለባቸው።')}</Alert>}
         <div className="grid gap-3 rounded-lg bg-amber-50 p-4 sm:grid-cols-2">
           <div>
             <p className="text-xs text-stone-600">{t('Amount to pay', 'የሚከፍሉት መጠን')}</p>
@@ -177,8 +179,8 @@ function PaymentPanel({ a, accepted }: { a: any; accepted: any }) {
           </div>
         </div>
         {instructions && <p className="whitespace-pre-wrap rounded-lg border border-stone-200 p-3">{instructions}</p>}
-        {accepted?.checkoutUrl && (
-          <a href={accepted.checkoutUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white sm:w-auto">
+        {pay.checkoutUrl && pay.status === 'PENDING' && (
+          <a href={pay.checkoutUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white sm:w-auto">
             {t('Pay online', 'በመስመር ላይ ይክፈሉ')}
           </a>
         )}

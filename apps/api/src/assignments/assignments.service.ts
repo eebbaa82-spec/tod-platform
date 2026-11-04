@@ -9,9 +9,11 @@ import { ParametersService } from '../common/parameters.service';
 import { PrismaService } from '../common/prisma.service';
 import { SequenceService } from '../common/sequence.service';
 import { addWorkingDays } from '../common/working-days';
+import { CohortsService } from '../cohorts/cohorts.service';
 import { ClientsService } from '../clients/clients.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CommissionService } from '../payments/commission.service';
+import { FilesService } from '../files/files.service';
 import { PaymentsService } from '../payments/payments.service';
 import { AcceptProposalDto, CounterDto, CreateAssignmentDto, RespondInvitationDto, ScopeDto } from './dto';
 import { MatchingService } from './matching.service';
@@ -32,6 +34,8 @@ export class AssignmentsService {
     private readonly commission: CommissionService,
     private readonly payments: PaymentsService,
     private readonly clock: ClockService,
+    private readonly files: FilesService,
+    private readonly cohorts: CohortsService,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -112,6 +116,10 @@ export class AssignmentsService {
       data.packageVersion = { connect: { id: pkg.currentVersion.id } };
       data.serviceAreaId = pkg.serviceAreaId;
       data.title = dto.title ?? pkg.currentVersion.titleEn;
+      // Extra acceptance criteria agreed with the client are kept on top of the package's own.
+      if (dto.acceptanceCriteria?.length) {
+        data.brief = `${dto.brief ?? a.brief ?? ''}\n\nAdditional acceptance criteria:\n${dto.acceptanceCriteria.map((c) => `- ${c}`).join('\n')}`.trim();
+      } else if (dto.brief) data.brief = dto.brief;
       minTier = pkg.currentVersion.minTier;
     } else {
       // Custom-scoped work goes to Expert-tier talents only (FR-CAT-05).
@@ -293,6 +301,8 @@ export class AssignmentsService {
 
     const { limit } = await this.clients.effectiveLimit(a.clientId);
     if (limit !== null && p.amount > limit) throw fail.bad('VALUE_LIMIT', `Your account level allows assignments up to ${formatEtb(limit)}.`);
+    // Only approved pilot cohorts transact live (FR-ADM-07).
+    await this.cohorts.assertLiveAllowed(a.clientId, p.talentId, p.amount);
 
     // The talent must still be within their concurrency limit (FR-TAL-06).
     const concurrency = await this.params.get<Record<string, number>>('TIER_CONCURRENCY');
@@ -452,8 +462,19 @@ export class AssignmentsService {
       .filter((r) => r.publishedAt || r.raterId === me.id || staff)
       .map((r) => ({ ...r, removedById: undefined }));
 
+    // File names for each delivery, so people see what they are opening.
+    const deliveryFiles = await this.files.describe(a.milestones.flatMap((m) => m.deliveries.flatMap((d) => d.fileIds)));
+    const milestones = a.milestones.map((m) => ({
+      ...m,
+      deliveries: m.deliveries.map((d) => ({ ...d, files: d.fileIds.map((fid) => deliveryFiles.find((f) => f.id === fid)).filter(Boolean) })),
+    }));
+    // An invited talent sees the commission that would apply before proposing (FR-PAY transparency).
+    const commissionPreview = viewerRole === 'INVITED_TALENT' || viewerRole === 'TALENT' ? await this.commission.rateFor(me.id) : undefined;
+
     return {
       ...a,
+      milestones,
+      commissionPreview,
       ratings,
       viewerRole,
       invitation,
