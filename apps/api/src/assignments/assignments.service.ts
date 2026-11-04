@@ -14,6 +14,7 @@ import { ClientsService } from '../clients/clients.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CommissionService } from '../payments/commission.service';
 import { FilesService } from '../files/files.service';
+import { PayLaterService } from '../paylater/paylater.service';
 import { PaymentsService } from '../payments/payments.service';
 import { AcceptProposalDto, CounterDto, CreateAssignmentDto, RespondInvitationDto, ScopeDto } from './dto';
 import { MatchingService } from './matching.service';
@@ -33,6 +34,7 @@ export class AssignmentsService {
     private readonly clients: ClientsService,
     private readonly commission: CommissionService,
     private readonly payments: PaymentsService,
+    private readonly payLater: PayLaterService,
     private readonly clock: ClockService,
     private readonly files: FilesService,
     private readonly cohorts: CohortsService,
@@ -533,7 +535,10 @@ export class AssignmentsService {
 
   // Pay-later arrears block new assignments (FR-BNP-07). The pay-later module is
   // switched off at launch; this check is the hook for it.
-  private async assertNotInArrears(_clientId: string) {
-    return;
+  // FR-BNP-07: new assignments are suspended while a pay-later repayment is late.
+  private async assertNotInArrears(clientId: string) {
+    if (await this.payLater.inArrears(clientId)) {
+      throw fail.forbidden('PAY_LATER_ARREARS', 'A pay-later repayment is overdue. Repay it before posting a new assignment.');
+    }
   }
 }

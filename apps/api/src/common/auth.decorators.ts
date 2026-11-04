@@ -33,6 +33,7 @@ export const STAFF_ROLES: Role[] = [
   'SUPER_ADMIN',
   'AUDITOR',
   'PARTNER_VIEWER',
+  'LENDER_VIEWER',
 ];
 
 export const isStaff = (roles: Role[]) => roles.some((r) => STAFF_ROLES.includes(r));

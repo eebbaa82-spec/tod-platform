@@ -9,6 +9,7 @@ import { PrismaService } from '../common/prisma.service';
 import { addWorkingDays } from '../common/working-days';
 import { FilesService } from '../files/files.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { PayLaterService } from '../paylater/paylater.service';
 import { PaymentsService } from '../payments/payments.service';
 import { DeliverDto } from './dto';
 import { transition } from './state';
@@ -21,6 +22,7 @@ export class MilestonesService {
     private readonly params: ParametersService,
     private readonly notifications: NotificationsService,
     private readonly payments: PaymentsService,
+    private readonly payLater: PayLaterService,
     private readonly files: FilesService,
     private readonly clock: ClockService,
   ) {}
@@ -118,6 +120,8 @@ export class MilestonesService {
       await this.audit.log({ actorId, action: auto ? 'MILESTONE_AUTO_ACCEPTED' : 'MILESTONE_SIGNED_OFF', entityType: 'Milestone', entityId: m.id, after: { deliveryId: last?.id, at: now } }, tx);
     });
     await this.payments.settleMilestone(m.id, auto ? 'REVIEW_WINDOW_EXPIRED' : 'ACCEPTED');
+    // Under pay-later the accepted value becomes a repayment instalment (FR-BNP-05).
+    await this.payLater.onMilestoneSettled(m.id);
     return { ok: true };
   }
 

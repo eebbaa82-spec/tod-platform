@@ -8,6 +8,8 @@ class CohortDto {
   @IsOptional() @IsString() @MaxLength(1000) description?: string;
   @IsOptional() @IsInt() @Min(0) valueLimit?: number | null;
   @IsOptional() @IsBoolean() payLaterEligible?: boolean;
+  // Pay-later cap for the cohort, approved with it by the Project Director (FR-BNP-04).
+  @IsOptional() @IsInt() @Min(0) payLaterCap?: number | null;
 }
 class MembersDto {
   @IsOptional() @IsArray() @IsString({ each: true }) add?: string[];

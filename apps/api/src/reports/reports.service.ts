@@ -1,3 +1,4 @@
+import { PayLaterService } from '../paylater/paylater.service';
 import { Injectable } from '@nestjs/common';
 import * as ExcelJS from 'exceljs';
 import { AuditService } from '../common/audit.service';
@@ -38,6 +39,7 @@ export class ReportsService {
     private readonly params: ParametersService,
     private readonly clock: ClockService,
     private readonly audit: AuditService,
+    private readonly payLater: PayLaterService,
   ) {}
 
   private range(f: ReportFilter) {
@@ -87,14 +89,20 @@ export class ReportsService {
       talentIncomeNetSantim: paid._sum.net ?? 0,
       grossTransactionValueSantim: paid._sum.gross ?? 0,
       commissionRevenueSantim: paid._sum.commission ?? 0,
-      payLaterDefaultRate: (await this.params.get<boolean>('PAY_LATER_ENABLED')) ? 0 : null,
+      payLaterDefaultRate: await this.payLaterDefaultRate(),
       satisfaction: ratings._avg.average ? round(ratings._avg.average, 2) : null,
       ratingCount: ratings._count._all,
       disputeRate: funded ? round((disputes.length / funded) * 100) : null,
       disputesOpened: disputes.length,
       averageResolutionDays: resolved.length ? round(resolved.reduce((s, d) => s + (d.closedAt!.getTime() - d.createdAt.getTime()) / DAY, 0) / resolved.length) : null,
-      notes: { completionRate: 'Closed assignments as a share of funded assignments that ended in the period.', payLaterDefaultRate: 'Not applicable while pay-later is switched off.' },
+      notes: { completionRate: 'Closed assignments as a share of funded assignments that ended in the period.', payLaterDefaultRate: 'Pay-later balances more than 60 days past due as a share of value disbursed (BR-05), across the portfolio to date. Not applicable while pay-later is off and nothing has been disbursed.' },
     };
+  }
+
+  private async payLaterDefaultRate() {
+    const p = await this.payLater.portfolio();
+    if (!p.enabled && p.disbursed === 0) return null;
+    return round(p.defaultRate * 100);
   }
 
   async talentBreakdown(f: ReportFilter) {
