@@ -14,7 +14,7 @@ import { PaymentEventsService } from '../payments/payment-events.service';
 // ============================================================================
 // TEST STAND-INS for the three developer modules. Every route here refuses to
 // run when APP_ENV=production. They call exactly the same integration points
-// the real Fayda, vetting and escrow modules will call.
+// the real partner-bank identity, vetting and escrow modules will call.
 // ============================================================================
 
 class IdentityDto {
@@ -22,7 +22,8 @@ class IdentityDto {
   @IsOptional() @IsString() verifiedName?: string;
   @IsOptional() @IsIn(['FEMALE', 'MALE']) sex?: 'FEMALE' | 'MALE';
   @IsOptional() @IsString() dateOfBirth?: string;
-  @IsOptional() @IsString() fan?: string;
+  // Stands in for the partner bank's customer reference; a test value is made from the phone if empty.
+  @IsOptional() @IsString() bankReference?: string;
 }
 class TierDto {
   @IsString() serviceAreaCode: string;
@@ -69,13 +70,13 @@ export class DevController {
   async setIdentity(@CurrentUser() me: SessionUser, @Param('userId') userId: string, @Body() dto: IdentityDto) {
     this.guard();
     const u = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
-    const fan = dto.fan ?? `9${u.phone.replace(/\D/g, '').slice(-11).padStart(15, '0')}`;
+    const ref = dto.bankReference ?? `9${u.phone.replace(/\D/g, '').slice(-11).padStart(15, '0')}`;
     const r = await this.identity.apply(
       {
         userId,
         status: dto.status,
-        identityToken: dto.status === 'FAILED' ? undefined : `test-${fan}`,
-        identifierForMasking: fan,
+        identityToken: dto.status === 'FAILED' ? undefined : `test-${ref}`,
+        identifierForMasking: ref,
         verifiedName: dto.verifiedName ?? u.displayName,
         sex: dto.sex,
         dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,

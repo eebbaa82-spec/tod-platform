@@ -76,13 +76,13 @@ async function main() {
       return { id: r.user.id as string, call: as(r.token) };
     };
 
-    let fan = 6000_0000_0000_0001;
+    let bankRef = 6000_0000_0000_0001;
     const talents: Record<string, { id: string; call: Call }> = {};
     for (const t of TALENTS) {
       const u = await register('TALENT', t.phone, t.name, t.language);
       await u.call('PUT', '/talent/me', { headline: t.headline, bio: `${t.name.split(' ')[0]} has worked with small businesses across Addis Ababa.`, skills: [t.area], hoursPerWeek: 30, workMode: 'REMOTE' });
       await u.call('POST', '/me/vetting/request');
-      await vet('POST', `/dev/identity/${u.id}`, { status: 'VERIFIED', verifiedName: t.name, sex: t.sex, dateOfBirth: '1999-03-15', fan: String(fan++) });
+      await vet('POST', `/dev/identity/${u.id}`, { status: 'VERIFIED', verifiedName: t.name, sex: t.sex, dateOfBirth: '1999-03-15', bankReference: String(bankRef++) });
       await u.call('PUT', '/talent/me/payout', { channel: 'TELEBIRR', accountNumber: `09${t.phone.slice(-8)}`, accountName: t.name });
       await vet('POST', `/dev/vetting/${u.id}`, { status: 'APPROVED', tiers: [{ serviceAreaCode: t.area, tier: t.tier, testScore: 85 }] });
       talents[t.area] = u;
@@ -92,7 +92,7 @@ async function main() {
     for (const c of CLIENTS) {
       const u = await register('CLIENT', c.phone, c.name, 'en');
       await u.call('PUT', '/clients/me', { level: 'VERIFIED_ENTERPRISE', enterpriseName: c.business, tin: '0012345678', tradeLicenceNo: 'AA/14/2025', sector: c.sector, subCity: c.subCity, staffSize: c.staff, referralSource: 'ASSOCIATION', womenLed: c.womenLed });
-      await vet('POST', `/dev/identity/${u.id}`, { status: 'VERIFIED', verifiedName: c.name, sex: c.womenLed ? 'FEMALE' : 'MALE', dateOfBirth: '1987-06-01', fan: String(fan++) });
+      await vet('POST', `/dev/identity/${u.id}`, { status: 'VERIFIED', verifiedName: c.name, sex: c.womenLed ? 'FEMALE' : 'MALE', dateOfBirth: '1987-06-01', bankReference: String(bankRef++) });
       await sup('POST', `/clients/${u.id}/confirm-level`, { note: 'Trade licence and TIN checked (demo)' });
       clients.push(u);
     }

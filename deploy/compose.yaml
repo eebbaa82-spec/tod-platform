@@ -30,6 +30,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
       FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?set FIELD_ENCRYPTION_KEY in .env}
       WEB_ORIGIN: ${WEB_ORIGIN:?set WEB_ORIGIN in .env}
+      BASE_PATH: ${BASE_PATH:-}
       SMS_PROVIDER: ${SMS_PROVIDER:-console}
       AFROMESSAGE_TOKEN: ${AFROMESSAGE_TOKEN:-}
       AFROMESSAGE_SENDER: ${AFROMESSAGE_SENDER:-}
@@ -37,7 +38,11 @@ services:
       - uploads:/data/storage
 
   web:
-    build: { context: .., target: web }
+    build:
+      context: ..
+      target: web
+      args:
+        BASE_PATH: ${BASE_PATH:-}
     image: tod-web
     restart: unless-stopped
     depends_on: [api]
@@ -51,6 +56,7 @@ services:
       - "443:443"
     environment:
       SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+      BASE_PATH: ${BASE_PATH:-}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data

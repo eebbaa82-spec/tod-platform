@@ -1,10 +1,14 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
 import { CurrentUser, Roles, SessionUser } from '../common/auth.decorators';
 import { MeService } from './me.service';
 
 class PasswordDto {
   @IsString() password: string;
+}
+class IdentityStartDto {
+  // The user agreed to the partner bank confirming their identity (FR-KYC-02).
+  @IsBoolean() consent: boolean;
 }
 class ErasureDto {
   @IsOptional() @IsString() @MaxLength(2000) reason?: string;
@@ -15,8 +19,8 @@ export class MeController {
   constructor(private readonly me: MeService) {}
 
   @Post('identity/start')
-  startIdentity(@CurrentUser() u: SessionUser) {
-    return this.me.startIdentity(u);
+  startIdentity(@CurrentUser() u: SessionUser, @Body() dto: IdentityStartDto) {
+    return this.me.startIdentity(u, dto.consent);
   }
 
   @Post('vetting/request')

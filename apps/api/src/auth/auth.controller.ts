@@ -12,7 +12,7 @@ function setCookie(res: Response, token: string) {
     httpOnly: true,
     sameSite: 'lax',
     secure: config.isProduction,
-    path: '/',
+    path: config.cookiePath,
     maxAge: 30 * 24 * 3600 * 1000,
   });
 }
@@ -60,7 +60,7 @@ export class AuthController {
   @Public()
   @Post('logout')
   logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie(SESSION_COOKIE, { path: '/' });
+    res.clearCookie(SESSION_COOKIE, { path: config.cookiePath });
     return { ok: true };
   }
 

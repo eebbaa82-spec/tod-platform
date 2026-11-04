@@ -7,7 +7,7 @@ setup serves two purposes:
 | | `APP_ENV=staging` | `APP_ENV=production` |
 | --- | --- | --- |
 | Use | Demo and training server | Live pilot |
-| Fayda, vetting, bank funding | Test stand-ins in the console | The integration developer's modules |
+| Bank identity check, vetting, bank funding | Test stand-ins in the console | The integration developer's modules |
 | One-time codes | Shown on screen | Sent by SMS only |
 | Demo data | Can be loaded | Refused |
 
@@ -44,7 +44,9 @@ Edit `deploy/.env`:
 
 * `APP_ENV`: `staging` or `production`.
 * `SITE_ADDRESS`: the domain, e.g. `tod.eruditeafrica.com`.
-* `WEB_ORIGIN`: the full address, e.g. `https://tod.eruditeafrica.com`.
+* `WEB_ORIGIN`: the scheme and host only, e.g. `https://tod.eruditeafrica.com`.
+* `BASE_PATH`: leave empty to serve the platform at the root of the domain,
+  or set a sub-path such as `/tod` (see *Serving under a sub-path* below).
 * `POSTGRES_PASSWORD`, `JWT_SECRET`, `FIELD_ENCRYPTION_KEY`: run
   `openssl rand -hex 32` three times and paste one result into each.
 * For real SMS: `SMS_PROVIDER=afromessage` with the AfroMessage token and
@@ -53,6 +55,40 @@ Edit `deploy/.env`:
 Keep a copy of `.env` somewhere safe outside the server. If
 `FIELD_ENCRYPTION_KEY` is lost, the encrypted fields in the database cannot
 be read again, even from a backup.
+
+### Serving under a sub-path (eruditeafrica.com/tod)
+
+Set `BASE_PATH=/tod` to serve every page, the API (`/tod/api`) and uploaded
+files under `/tod`; the session cookie is then limited to `/tod` too. The
+sub-path is fixed when the web image is built, so rebuild (`up -d --build`)
+after changing it. How the traffic reaches this server depends on where the
+domain's main website is hosted:
+
+* **The main website is hosted elsewhere** (the usual case). Point
+  `SITE_ADDRESS` at a name for this server, e.g. `app.eruditeafrica.com` with
+  `WEB_ORIGIN=https://eruditeafrica.com`, and ask whoever runs the main website
+  to forward `/tod/` to this server, keeping the path.
+  For example, in Apache:
+
+  ```apache
+  SSLProxyEngine On
+  ProxyPass        /tod/ https://app.eruditeafrica.com/tod/
+  ProxyPassReverse /tod/ https://app.eruditeafrica.com/tod/
+  ```
+
+  or in nginx:
+
+  ```nginx
+  location /tod/ { proxy_pass https://app.eruditeafrica.com; proxy_ssl_server_name on; }
+  ```
+
+  Traffic then passes through the main website's host. If that host is
+  outside Ethiopia, use this set-up only for demonstrations with test data;
+  for the live pilot use a sub-domain such as `tod.eruditeafrica.com` that
+  points straight at this server (NFR-PRV-02).
+* **The whole domain points at this server.** Set
+  `SITE_ADDRESS=eruditeafrica.com`. Visitors to the bare address are sent on
+  to `/tod/`; everything outside `/tod` is not served.
 
 ## 3. Start it
 
@@ -134,7 +170,7 @@ docker compose --env-file .env start api web
 
 ## 7. Before going live
 
-* The integration developer's Fayda, vetting and escrow modules are in place
+* The integration developer's partner-bank identity, vetting and escrow modules are in place
   (see [DEVELOPER-INTEGRATION.md](DEVELOPER-INTEGRATION.md)), and
   `APP_ENV=production`.
 * `LocalDiskStorage` and `NoScanner` in `apps/api/src/files/storage.ts` are

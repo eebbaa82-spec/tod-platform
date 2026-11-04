@@ -5,6 +5,7 @@ import { Badge, Card, Empty, ErrorText, Spinner } from '@/components/ui';
 import { date } from '@/lib/format';
 import { useLang } from '@/lib/i18n';
 import { useApi } from '@/lib/use-api';
+import { apiUrl } from '@/lib/api';
 
 interface PublicTalent {
   userId: string;
@@ -57,7 +58,7 @@ export default function TalentProfilePage() {
         <div className="flex items-start gap-4">
           {p.photoFileId ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={`/api/files/public/${p.photoFileId}`} alt={p.name} className="size-16 shrink-0 rounded-full border border-stone-200 object-cover" />
+            <img src={apiUrl(`/files/public/${p.photoFileId}`)} alt={p.name} className="size-16 shrink-0 rounded-full border border-stone-200 object-cover" />
           ) : (
             <div className="grid size-16 shrink-0 place-items-center rounded-full bg-brand-100 text-xl font-bold text-brand-700" aria-hidden>
               {initials}
@@ -114,7 +115,7 @@ export default function TalentProfilePage() {
                         </a>
                       )}
                       {item.fileId && (
-                        <a href={`/api/files/public/${item.fileId}`} target="_blank" rel="noopener noreferrer" className="inline-block py-1 font-semibold text-brand-700 underline">
+                        <a href={apiUrl(`/files/public/${item.fileId}`)} target="_blank" rel="noopener noreferrer" className="inline-block py-1 font-semibold text-brand-700 underline">
                           {t('Open file', 'ፋይሉን ክፈት')}
                         </a>
                       )}

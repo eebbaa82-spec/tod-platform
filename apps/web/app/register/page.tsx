@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { CodeField, DevCodeHint, getDeviceId, phoneHint } from '@/components/public-common';
 import { Button, Card, Checkbox, ErrorText, Field, Input, PageTitle, Select, Spinner, useAction } from '@/components/ui';
-import { post } from '@/lib/api';
+import { post, BASE } from '@/lib/api';
 import { useLang } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
 
@@ -184,7 +184,7 @@ function Register() {
               <legend className="sr-only">{t('Agreements', 'ስምምነቶች')}</legend>
               <p className="mb-1 text-sm font-medium">
                 {t('Please read and agree to continue:', 'ለመቀጠል ያንብቡና ይስማሙ፦')}{' '}
-                <a href="/policies" target="_blank" className="text-brand-700 underline">{t('Read the rules', 'ደንቦቹን ያንብቡ')}</a>
+                <a href={`${BASE}/policies`} target="_blank" className="text-brand-700 underline">{t('Read the rules', 'ደንቦቹን ያንብቡ')}</a>
               </p>
               <Checkbox checked={terms} onChange={(e) => setTerms(e.target.checked)} label={t('I agree to the Terms of Use', 'በአጠቃቀም ደንቦቹ እስማማለሁ')} />
               <Checkbox checked={privacy} onChange={(e) => setPrivacy(e.target.checked)} label={t('I agree to the Privacy Notice (how my data is used)', 'በግላዊነት ማሳሰቢያው (መረጃዬ እንዴት እንደሚያዝ) እስማማለሁ')} />

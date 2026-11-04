@@ -10,6 +10,10 @@ import { IDENTITY_PROVIDER, IdentityVerificationProvider } from '../integrations
 import { PublicationService } from '../integrations/publication';
 import { NotificationsService } from '../notifications/notifications.service';
 
+// Consent the user gives before each identity check with the partner bank (FR-KYC-02).
+export const IDENTITY_CHECK_CONSENT = 'PARTNER_BANK_IDENTITY_CHECK';
+export const IDENTITY_CHECK_CONSENT_VERSION = '2026-11';
+
 // Data-subject rights and the user's own entry points to identity and vetting.
 @Injectable()
 export class MeService {
@@ -23,14 +27,17 @@ export class MeService {
     @Inject(IDENTITY_PROVIDER) private readonly identity: IdentityVerificationProvider,
   ) {}
 
-  // Hands over to the Fayda module (developer). Until it is connected the
-  // request waits for staff (PendingIdentityProvider).
-  async startIdentity(me: SessionUser) {
+  // Asks the partner bank to confirm the user's identity (FR-KYC-01) through
+  // the developer's connector. Until it is connected the request waits for
+  // staff (PendingIdentityProvider). Consent is recorded for every request (FR-KYC-02).
+  async startIdentity(me: SessionUser, consent: boolean) {
     const u = await this.prisma.user.findUniqueOrThrow({ where: { id: me.id } });
     if (u.identityStatus === 'VERIFIED') return { status: 'VERIFIED' };
+    if (!consent) throw fail.bad('CONSENT_REQUIRED', 'Please agree to the identity check with the partner bank first.');
+    await this.prisma.consent.create({ data: { userId: me.id, document: IDENTITY_CHECK_CONSENT, version: IDENTITY_CHECK_CONSENT_VERSION, acceptedAt: this.clock.now() } });
     const r = await this.identity.start(me.id);
     await this.prisma.user.update({ where: { id: me.id }, data: { identityStatus: 'PENDING' } });
-    await this.audit.log({ actorId: me.id, action: 'IDENTITY_STARTED', entityType: 'User', entityId: me.id, after: { provider: this.identity.name } });
+    await this.audit.log({ actorId: me.id, action: 'IDENTITY_STARTED', entityType: 'User', entityId: me.id, after: { provider: this.identity.name, consent: IDENTITY_CHECK_CONSENT_VERSION } });
     if (this.identity.name === 'not-connected') await this.notifications.notifyRole(['VETTING_OFFICER', 'SUPPORT_AGENT'], 'Identity check waiting', `${u.displayName} asked to verify identity.`, `/console/users/${u.id}`);
     return r;
   }

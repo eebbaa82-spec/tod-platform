@@ -1,9 +1,10 @@
 # Requirement coverage
 
-Against the ToD Platform Requirements Definition V-002. Status key:
+Against the ToD Platform Requirements Definition V-005 (November 4, 2026).
+Requirements added since V-002 are listed under *New in V-005* at the end. Status key:
 
 * **Built**: implemented and, where marked ✔, exercised by an automated test.
-* **Developer**: part of the Fayda, vetting or escrow modules, behind the
+* **Developer**: part of the partner-bank identity, vetting or escrow modules, behind the
   interfaces in [DEVELOPER-INTEGRATION.md](DEVELOPER-INTEGRATION.md).
 * **Partly**: the data and hooks exist; the full feature is still to do.
 * **Later**: R2 to R4 items not started.
@@ -22,22 +23,24 @@ Against the ToD Platform Requirements Definition V-002. Status key:
 | FR-ACC-08 | Built | Deactivate, data export and logged erasure request |
 | FR-ACC-09 | Built ✔ | Under-18 refused on the verified date of birth |
 
-## 4.2 Identity verification (Fayda)
+## 4.2 Identity verification (through the partner bank)
 
 | ID | Status | Notes |
 | --- | --- | --- |
-| FR-KYC-01, 02, 06, 07, 09, 10, 11, 12 | Developer | Flow, consent, vault, queues, call counting |
-| FR-KYC-03 | Built | Only the needed attributes are stored |
-| FR-KYC-04 | Built ✔ | One account per identity token |
+| FR-KYC-01, 06, 09, 10, 11, 12 | Developer | Bank connector (IF-01), reference vault, queues, request counting |
+| FR-KYC-02 | Built ✔ | Consent recorded before every request; refused without it |
+| FR-KYC-07 | Built | No photograph or biometric field is received or stored |
+| FR-KYC-03 | Built | Only name, sex, date of birth, result and a token for the bank reference |
+| FR-KYC-04 | Built ✔ | One account per identity token derived from the bank customer reference |
 | FR-KYC-05 | Built ✔ | Badge and masked identifier |
-| FR-KYC-08 | Built | Every result audited with method and reference |
+| FR-KYC-08 | Built ✔ | Every request and result audited with method and reference |
 
 ## 4.3 Talent profile and tiering
 
 | ID | Status | Notes |
 | --- | --- | --- |
 | FR-TAL-01, 04, 05 | Built | Profile field groups, portfolio, availability and response time |
-| FR-TAL-02 | Built | Sex and age from Fayda; voluntary disability, displacement, other |
+| FR-TAL-02 | Built | Sex and age from the verified identity; voluntary disability, displacement, other |
 | FR-TAL-03 | Built ✔ | Restricted fields never on the public profile |
 | FR-TAL-06 | Built | Tier per service area; package minimum tier and concurrency enforced |
 | FR-TAL-07 | Developer | Promotion is a vetting outcome |
@@ -116,7 +119,7 @@ check is a hook in `AssignmentsService.assertNotInArrears`.
 
 | ID | Status | Notes |
 | --- | --- | --- |
-| FR-COM-01 | Built ✔ | 5% standard, 1% for Fayda-verified women or confirmed disability, snapshotted at agreement |
+| FR-COM-01 | Built ✔ | 5% standard, 1% for women with a verified identity or confirmed disability, snapshotted at agreement |
 | FR-COM-02 | Built ✔ | Parameters with effective dates and a second approver |
 | FR-COM-06 | Built | `TALENT_FEES_ENABLED` off |
 | FR-COM-03, 04, 05 | Later | |
@@ -189,3 +192,22 @@ check is a hook in `AssignmentsService.assertNotInArrears`.
 ## 4.18 Commercial operations
 
 FR-BIZ-01 to 15 are **Later** (R3 and R4).
+
+## New in V-005
+
+Requirements added since V-002. R1 items are being built next.
+
+| ID | Release | Status | Notes |
+| --- | --- | --- | --- |
+| FR-TAL-12 | R1 | To do | Recruitment channel and referring organisation per talent |
+| FR-CLI-02, 03 | R1 | Partly | Owner verified through the partner bank; date of establishment and beneficial owner to add |
+| FR-CLI-08 | R1 | To do | Voluntary ownership flags for every client level |
+| FR-ESC-14 | R1 | Partly | Dual authorisation built; "interim" labelling and named case owner to add |
+| FR-DSP-09 | R1 | Partly | Stage targets built; intake timer and two-working-day alert to add |
+| FR-ADM-07 | R1 | To do | Live transactions limited to approved cohorts |
+| FR-MEL-11, 12 | R1 | To do | Ten GESI indicators monthly; group targets as parameters |
+| FR-BNP-11 to 13 | R2 | Later | Pay-later portfolio controls |
+| FR-COM-07 | R2 | Later | Effect of the inclusive rate by group |
+| FR-ADM-08 | R2 | Later | Integration-readiness register |
+| FR-BIZ-01 to 15 | R3, R4 | Later | Commercial operation and growth |
+

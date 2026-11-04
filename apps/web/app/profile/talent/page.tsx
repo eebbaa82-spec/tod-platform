@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { RequireAuth } from '@/components/shell';
 import { Alert, Badge, Button, Card, Checkbox, Empty, ErrorText, Field, Input, LinkButton, PageTitle, Select, Spinner, Textarea, useAction } from '@/components/ui';
 import { FileLink, FileUploader, identityLabel, subCityOptions, TierBadge, vettingLabel } from '@/components/work-common';
-import { del, post, put, upload } from '@/lib/api';
+import { del, post, put, upload, apiUrl } from '@/lib/api';
 import { useLang } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
 import { useApi } from '@/lib/use-api';
@@ -95,7 +95,7 @@ function PhotoPanel({ p, reload }: { p: any; reload: () => void }) {
       <div className="flex flex-wrap items-center gap-4">
         {p.photoFileId ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={`/api/files/${p.photoFileId}`} alt={t('Your profile photo', 'የመገለጫ ፎቶዎ')} className="size-20 rounded-full border border-stone-200 object-cover" />
+          <img src={apiUrl(`/files/${p.photoFileId}`)} alt={t('Your profile photo', 'የመገለጫ ፎቶዎ')} className="size-20 rounded-full border border-stone-200 object-cover" />
         ) : (
           <span className="flex size-20 items-center justify-center rounded-full bg-brand-100 text-2xl font-bold text-brand-700">{initials(name)}</span>
         )}
@@ -129,17 +129,18 @@ function StatusPanel({ p, reload }: { p: any; reload: () => void }) {
   const idAct = useAction();
   const vetAct = useAction();
   const [idMsg, setIdMsg] = useState<string | null>(null);
+  const [idConsent, setIdConsent] = useState(false);
   const idStatus = p.identity?.status as string;
   const idOk = idStatus === 'VERIFIED' || idStatus === 'PROVISIONAL';
 
   const startIdentity = () =>
     idAct.run(async () => {
-      const r = await post<{ status: string; redirectUrl?: string; message?: string }>('/me/identity/start');
+      const r = await post<{ status: string; redirectUrl?: string; message?: string }>('/me/identity/start', { consent: idConsent });
       if (r.redirectUrl) {
         window.location.href = r.redirectUrl;
         return;
       }
-      setIdMsg(r.status === 'VERIFIED' ? t('Your identity is already verified.', 'ማንነትዎ ቀድሞውኑ ተረጋግጧል።') : t('Your identity check has started. Our team will finish it and let you know by SMS.', 'የማንነት ማረጋገጫዎ ተጀምሯል። ቡድናችን አጠናቅቆ በSMS ያሳውቅዎታል።'));
+      setIdMsg(r.status === 'VERIFIED' ? t('Your identity is already verified.', 'ማንነትዎ ቀድሞውኑ ተረጋግጧል።') : t('Your identity check has started. We will confirm it with the partner bank and let you know by SMS.', 'የማንነት ማረጋገጫዎ ተጀምሯል። ከአጋር ባንኩ ጋር አረጋግጠን በSMS እናሳውቅዎታለን።'));
       await refresh();
       reload();
     });
@@ -164,9 +165,12 @@ function StatusPanel({ p, reload }: { p: any; reload: () => void }) {
           )}
           {p.identity?.masked && <p className="text-stone-600">{p.identity.masked}</p>}
           {!idOk && idStatus !== 'PENDING' && (
-            <Button onClick={startIdentity} busy={idAct.busy} className="w-full">
-              {t('Verify my identity with Fayda', 'ማንነቴን በፋይዳ አረጋግጥ')}
-            </Button>
+            <>
+              <Checkbox checked={idConsent} onChange={(e) => setIdConsent(e.target.checked)} label={t('I agree that ToD asks its partner bank to confirm that I hold an active account in my name, and that the bank shares my name, sex and date of birth with ToD.', 'ToD በስሜ ንቁ የባንክ ሂሳብ እንዳለኝ ከአጋር ባንኩ እንዲያረጋግጥ፣ ባንኩም ስሜን፣ ጾታዬንና የትውልድ ቀኔን ለToD እንዲያጋራ እስማማለሁ።')} />
+              <Button onClick={startIdentity} busy={idAct.busy} disabled={!idConsent} className="w-full">
+                {t('Verify my identity through my bank', 'ማንነቴን በባንኬ በኩል አረጋግጥ')}
+              </Button>
+            </>
           )}
           {idStatus === 'PENDING' && <p className="text-stone-600">{t('We are checking your identity. This usually takes up to two working days.', 'ማንነትዎን እያረጋገጥን ነው። ብዙ ጊዜ እስከ ሁለት የሥራ ቀናት ይወስዳል።')}</p>}
           {idMsg && <Alert tone="success">{idMsg}</Alert>}

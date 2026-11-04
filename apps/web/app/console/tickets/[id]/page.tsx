@@ -7,7 +7,7 @@ import { CONSOLE_ROLES } from '@/components/console-nav';
 import { RequireAuth } from '@/components/shell';
 import { FileUploader } from '@/components/work-common';
 import { Alert, Badge, Button, Card, Checkbox, ErrorText, Field, PageTitle, Select, Spinner, StatusBadge, Textarea, useAction } from '@/components/ui';
-import { post } from '@/lib/api';
+import { post, apiUrl } from '@/lib/api';
 import { date, humanise } from '@/lib/format';
 import { useLang } from '@/lib/i18n';
 import { useApi } from '@/lib/use-api';
@@ -90,7 +90,7 @@ function Ticket() {
                   tk.files?.length ? (
                     <span key="f" className="flex flex-wrap gap-2">
                       {tk.files.map((f: any) => (
-                        <a key={f.id} className="text-brand-700 underline" href={`/api/files/${f.id}`}>
+                        <a key={f.id} className="text-brand-700 underline" href={apiUrl(`/files/${f.id}`)}>
                           {f.name}
                         </a>
                       ))}

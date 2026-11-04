@@ -36,12 +36,12 @@ async function uploadAs(api: Api, name: string, data: Buffer, purpose: string) {
   return res.body.id as string;
 }
 
-let fanSeq = 7000;
+let refSeq = 7000;
 async function makeTalent(name: string) {
   const t = await register(app, 'TALENT', name);
   await t.api.put('/talent/me', { headline: `${name}, designer`, bio: 'Experienced and reliable.', skills: ['DESIGN'], hoursPerWeek: 30, workMode: 'REMOTE' });
   await t.api.post('/me/vetting/request');
-  await vet.post(`/dev/identity/${t.id}`, { status: 'VERIFIED', verifiedName: name, sex: 'FEMALE', dateOfBirth: '1998-05-01', fan: `${5000_0000_0000_0000 + fanSeq++}` });
+  await vet.post(`/dev/identity/${t.id}`, { status: 'VERIFIED', verifiedName: name, sex: 'FEMALE', dateOfBirth: '1998-05-01', bankReference: `${5000_0000_0000_0000 + refSeq++}` });
   await t.api.put('/talent/me/payout', { channel: 'TELEBIRR', accountNumber: '0911223344', accountName: name });
   await vet.post(`/dev/vetting/${t.id}`, { status: 'APPROVED', tiers: [{ serviceAreaCode: 'CUSTOMER_DB', tier: 'INTERMEDIATE', testScore: 82 }] });
   return t;
@@ -50,7 +50,7 @@ async function makeTalent(name: string) {
 async function makeClient(name: string) {
   const c = await register(app, 'CLIENT', name);
   await c.api.put('/clients/me', { level: 'VERIFIED_ENTERPRISE', enterpriseName: `${name} PLC`, tin: '0012345678', tradeLicenceNo: 'AA/123/2024', sector: 'Retail', subCity: 'Bole', staffSize: 6, referralSource: 'ASSOCIATION', womenLed: true });
-  await vet.post(`/dev/identity/${c.id}`, { status: 'VERIFIED', verifiedName: `${name} Owner`, sex: 'FEMALE', dateOfBirth: '1988-01-01', fan: `${6000_0000_0000_0000 + fanSeq++}` });
+  await vet.post(`/dev/identity/${c.id}`, { status: 'VERIFIED', verifiedName: `${name} Owner`, sex: 'FEMALE', dateOfBirth: '1988-01-01', bankReference: `${6000_0000_0000_0000 + refSeq++}` });
   await sup.post(`/clients/${c.id}/confirm-level`, { note: 'Checked' });
   return c;
 }

@@ -8,6 +8,7 @@ import { date, etb, humanise } from '@/lib/format';
 import { useLang } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
 import { useApi } from '@/lib/use-api';
+import { apiUrl } from '@/lib/api';
 
 export default function ReportsPage() {
   return (
@@ -118,7 +119,7 @@ function Reports() {
         sub={i ? t(`Period: ${date(i.period.from, lang)} to ${date(i.period.to, lang)}`, `ጊዜ፦ ${date(i.period.from, lang)} እስከ ${date(i.period.to, lang)}`) : t('Programme indicators', 'የፕሮግራም አመልካቾች')}
         actions={
           has(...CONSOLE_ROLES.reportsExport) ? (
-            <a href={`/api/reports/export.xlsx${q}`} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold hover:bg-stone-100">
+            <a href={apiUrl(`/reports/export.xlsx${q}`)} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold hover:bg-stone-100">
               {t('Export to Excel', 'ወደ ኤክሴል ላክ')}
             </a>
           ) : undefined

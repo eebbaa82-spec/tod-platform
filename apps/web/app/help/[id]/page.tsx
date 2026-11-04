@@ -6,7 +6,7 @@ import { useTicketLabels } from '@/components/public-common';
 import { RequireAuth } from '@/components/shell';
 import { Alert, Badge, Button, Card, ErrorText, Field, PageTitle, Spinner, StatusBadge, Textarea, useAction } from '@/components/ui';
 import { FileUploader } from '@/components/work-common';
-import { post } from '@/lib/api';
+import { post, apiUrl } from '@/lib/api';
 import { date } from '@/lib/format';
 import { useLang } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
@@ -92,7 +92,7 @@ function Ticket() {
           <ul className="mt-3 space-y-1 text-sm">
             {tk.files.map((f) => (
               <li key={f.id}>
-                <a href={`/api/files/${f.id}`} className="inline-block py-1 font-semibold text-brand-700 underline">
+                <a href={apiUrl(`/files/${f.id}`)} className="inline-block py-1 font-semibold text-brand-700 underline">
                   📎 {f.name}
                 </a>{' '}
                 <span className="text-xs text-stone-500">({Math.max(1, Math.round(f.size / 1024))} KB)</span>

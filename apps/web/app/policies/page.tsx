@@ -23,7 +23,7 @@ export default function Policies() {
       points: [
         t('Each package has a standard price and a price band. Talents can accept the standard price or propose a price within the band.', 'እያንዳንዱ ጥቅል መደበኛ ዋጋ እና የዋጋ ክልል አለው። ባለሙያዎች መደበኛውን ዋጋ መቀበል ወይም በክልሉ ውስጥ ዋጋ ማቅረብ ይችላሉ።'),
         t('The client pays the agreed price into an escrow account held by the partner bank. The platform never holds the money.', 'ደንበኛው የተስማሙበትን ዋጋ በአጋር ባንክ ወደሚያዝ የኤስክሮ ሂሳብ ይከፍላል። መድረኩ ገንዘቡን አይይዝም።'),
-        t('When the work is accepted, the talent is paid less a commission of 5%. Women verified through Fayda and persons with a confirmed disability pay 1%.', 'ሥራው ሲቀበል ባለሙያው 5% ኮሚሽን ተቀንሶ ይከፈለዋል። በፋይዳ የተረጋገጡ ሴቶች እና አካል ጉዳታቸው የተረጋገጠ ሰዎች 1% ይከፍላሉ።'),
+        t('When the work is accepted, the talent is paid less a commission of 5%. Women with a verified identity and persons with a confirmed disability pay 1%.', 'ሥራው ሲቀበል ባለሙያው 5% ኮሚሽን ተቀንሶ ይከፈለዋል። ማንነታቸው የተረጋገጠ ሴቶች እና አካል ጉዳታቸው የተረጋገጠ ሰዎች 1% ይከፍላሉ።'),
         t('Talents pay no registration or membership fee.', 'ባለሙያዎች የምዝገባ ወይም የአባልነት ክፍያ አይከፍሉም።'),
       ],
     },

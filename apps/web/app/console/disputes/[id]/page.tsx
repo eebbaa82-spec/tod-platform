@@ -6,7 +6,7 @@ import { JsonBlock, KV, Notice, shortId, useAgents } from '@/components/console-
 import { CONSOLE_ROLES } from '@/components/console-nav';
 import { RequireAuth } from '@/components/shell';
 import { Alert, Badge, Button, Card, Checkbox, ErrorText, Field, Input, PageTitle, Select, Spinner, Textarea, useAction } from '@/components/ui';
-import { post } from '@/lib/api';
+import { post, apiUrl } from '@/lib/api';
 import { date, etb, humanise, toSantim } from '@/lib/format';
 import { useLang } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
@@ -150,7 +150,7 @@ function Dispute() {
                 {n.fileIds?.length > 0 && (
                   <p className="mt-1 flex flex-wrap gap-2 text-xs">
                     {n.fileIds.map((f: string) => (
-                      <a key={f} className="text-brand-700 underline" href={`/api/files/${f}`}>
+                      <a key={f} className="text-brand-700 underline" href={apiUrl(`/files/${f}`)}>
                         {n.files?.find((x: any) => x.id === f)?.name ?? `${t('File', 'ፋይል')} ${shortId(f)}`}
                       </a>
                     ))}
@@ -298,7 +298,7 @@ function Evidence({ ev, who }: { ev: any; who: (id: string) => string }) {
     ids.length ? (
       <span className="flex flex-wrap gap-2">
         {ids.map((f) => (
-          <a key={f} className="text-brand-700 underline" href={`/api/files/${f}`}>
+          <a key={f} className="text-brand-700 underline" href={apiUrl(`/files/${f}`)}>
             {fileName(f)}
           </a>
         ))}

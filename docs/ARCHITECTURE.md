@@ -5,7 +5,7 @@
 ```
 apps/web  (Next.js, browser)  ──/api rewrite──▶  apps/api (NestJS)  ──▶  PostgreSQL
                                                      │
-                                                     ├─ integrations/  ◀── Fayda, vetting, escrow modules (developer)
+                                                     ├─ integrations/  ◀── partner-bank identity, vetting, escrow (developer)
                                                      ├─ notifications/ ──▶ SMS (AfroMessage), Telegram, email
                                                      └─ files/         ──▶ local disk (swap for object storage in Ethiopia)
 ```
@@ -49,7 +49,7 @@ you scale out.
   blocks update, delete and truncate. `GET /api/admin/audit/verify` checks
   the chain.
 * **Personal data**: the payout account number is encrypted with AES-256-GCM;
-  the Fayda identifier is stored only masked; restricted fields (disability,
+  any identifier from the partner bank is stored only masked; restricted fields (disability,
   displacement, contacts, payout details) never appear on public profiles;
   confidential cases are visible only to designated safeguarding staff.
 * **Staff** sessions require an authenticator code; routes used only by staff

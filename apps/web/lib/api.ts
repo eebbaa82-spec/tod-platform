@@ -1,5 +1,11 @@
 // Thin client for the ToD API. Requests go through Next's /api rewrite, so the
 // httpOnly session cookie travels with them.
+// Set when the site is served under a sub-path, e.g. /tod (see next.config.ts).
+export const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+
+/** Path to the API through the web app, with the sub-path applied. */
+export const apiUrl = (path: string) => `${BASE}/api${path}`;
+
 export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string) {
     super(message);
@@ -9,7 +15,7 @@ export class ApiError extends Error {
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 export async function api<T = any>(path: string, opts: { method?: Method; body?: unknown; form?: FormData } = {}): Promise<T> {
-  const res = await fetch(`/api${path}`, {
+  const res = await fetch(apiUrl(path), {
     method: opts.method ?? (opts.body || opts.form ? 'POST' : 'GET'),
     credentials: 'include',
     headers: opts.form ? undefined : { 'Content-Type': 'application/json' },

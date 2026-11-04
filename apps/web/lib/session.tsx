@@ -1,6 +1,6 @@
 'use client';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { get, post } from './api';
+import { BASE, get, post } from './api';
 import { useLang } from './i18n';
 
 export interface Me {
@@ -57,7 +57,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     await post('/auth/logout');
     setMe(null);
-    window.location.href = '/';
+    window.location.href = `${BASE}/`;
   }, []);
 
   const has = useCallback((...roles: string[]) => !!me?.roles.some((r) => roles.includes(r)), [me]);

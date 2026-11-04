@@ -133,7 +133,7 @@ function TalentChecklist({ p }: { p: any }) {
     },
     {
       done: idStatus === 'VERIFIED' || idStatus === 'PROVISIONAL',
-      label: t(`Verify your identity with Fayda (${identityLabel(idStatus, t)})`, `ማንነትዎን በፋይዳ ያረጋግጡ (${identityLabel(idStatus, t)})`),
+      label: t(`Verify your identity through your bank (${identityLabel(idStatus, t)})`, `ማንነትዎን በባንክዎ በኩል ያረጋግጡ (${identityLabel(idStatus, t)})`),
       href: '/account',
       action: t('Go to account', 'ወደ መለያ'),
     },

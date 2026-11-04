@@ -6,7 +6,7 @@ the client's money is held by the partner bank until the work is accepted.
 
 This repository holds the whole marketplace. Three modules are built
 separately by the integration developer and plug in through fixed interfaces:
-**Fayda identity verification**, the **vetting workflow**, and **bank-held
+**identity verification through the partner bank**, the **vetting workflow**, and **bank-held
 escrow with reconciliation**. Test stand-ins take their place outside
 production. See [docs/DEVELOPER-INTEGRATION.md](docs/DEVELOPER-INTEGRATION.md).
 

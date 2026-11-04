@@ -1,6 +1,6 @@
 'use client';
 import { useRef, useState } from 'react';
-import { ApiError, upload } from '@/lib/api';
+import { ApiError, upload, apiUrl } from '@/lib/api';
 import { useLang } from '@/lib/i18n';
 import { Badge, ErrorText, StatusBadge } from './ui';
 
@@ -116,7 +116,7 @@ export function FriendlyError({ error }: { error: unknown }) {
 export function FileLink({ id, name }: { id: string; name?: string }) {
   const { t } = useLang();
   return (
-    <a href={`/api/files/${id}`} className="inline-flex items-center gap-1 text-sm font-medium text-brand-700 underline underline-offset-2">
+    <a href={apiUrl(`/files/${id}`)} className="inline-flex items-center gap-1 text-sm font-medium text-brand-700 underline underline-offset-2">
       <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.4 11.1 12.2 20.3a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5" /></svg>
       {name ?? t('Download file', 'ፋይል ያውርዱ')}
     </a>

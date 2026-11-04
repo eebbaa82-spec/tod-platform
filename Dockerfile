@@ -16,7 +16,9 @@ RUN npx prisma generate --schema apps/api/prisma/schema.prisma
 RUN npm run build -w apps/api
 # The web app forwards /api to this address; inside Docker Compose the API is "api".
 ARG API_URL=http://api:4000
-ENV API_URL=$API_URL NEXT_TELEMETRY_DISABLED=1
+# Sub-path the site is served under, e.g. /tod; empty for the root of the domain.
+ARG BASE_PATH=
+ENV API_URL=$API_URL BASE_PATH=$BASE_PATH NEXT_TELEMETRY_DISABLED=1
 RUN npm run build -w apps/web
 
 # API: keeps the full dependency set so migrations, the seed and the admin and
