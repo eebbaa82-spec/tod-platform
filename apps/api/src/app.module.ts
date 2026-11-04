@@ -7,6 +7,7 @@ import { AssignmentsModule } from './assignments/assignments.module';
 import { AuthModule } from './auth/auth.module';
 import { CatalogueModule } from './catalogue/catalogue.module';
 import { ClientsModule } from './clients/clients.module';
+import { CohortsModule } from './cohorts/cohorts.module';
 import { AuthGuard } from './common/auth.guard';
 import { CoreModule } from './common/core.module';
 import { DevModule } from './dev/dev.module';
@@ -31,6 +32,7 @@ import { TalentModule } from './talent/talent.module';
     CoreModule,
     NotificationsModule,
     IntegrationsModule,
+    CohortsModule,
     FilesModule,
     PaymentsModule,
     AuthModule,

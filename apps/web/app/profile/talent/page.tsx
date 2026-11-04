@@ -252,10 +252,12 @@ function ProfileForm({ p, reload }: { p: any; reload: () => void }) {
   const [disability, setDisability] = useState(triValue(p.disability));
   const [displaced, setDisplaced] = useState(triValue(p.displaced));
   const [otherMarg, setOtherMarg] = useState(triValue(p.otherMarginalised));
+  const [channel, setChannel] = useState<string>(p.recruitmentChannel ?? '');
+  const [referrer, setReferrer] = useState<string>(p.referringOrganisation ?? '');
   const [saved, setSaved] = useState(false);
   const { busy, error, run } = useAction();
 
-  useEffect(() => setSaved(false), [headline, bio, subCity, education, credentials, experience, skills, languages, hours, days, workMode, disability, displaced, otherMarg]);
+  useEffect(() => setSaved(false), [headline, bio, subCity, education, credentials, experience, skills, languages, hours, days, workMode, disability, displaced, otherMarg, channel, referrer]);
 
   const toggle = (list: string[], v: string) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 
@@ -276,6 +278,8 @@ function ProfileForm({ p, reload }: { p: any; reload: () => void }) {
         disability: fromTri(disability),
         displaced: fromTri(displaced),
         otherMarginalised: fromTri(otherMarg),
+        recruitmentChannel: channel || undefined,
+        referringOrganisation: referrer.trim() || undefined,
       });
       setSaved(true);
       reload();
@@ -397,6 +401,29 @@ function ProfileForm({ p, reload }: { p: any; reload: () => void }) {
               <Select value={otherMarg} onChange={(e) => setOtherMarg(e.target.value)} options={triOptions} />
             </Field>
           </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label={t('How did you hear about ToD?', 'ስለ ToD እንዴት ሰሙ?')}>
+            <Select
+              value={channel}
+              onChange={(e) => setChannel(e.target.value)}
+              options={[
+                { value: '', label: t('Choose…', 'ይምረጡ…') },
+                { value: 'UNIVERSITY', label: t('University', 'ዩኒቨርሲቲ') },
+                { value: 'TVET', label: t('TVET college', 'የቴክኒክና ሙያ ኮሌጅ') },
+                { value: 'WOMEN_ORG', label: t("Women's organisation", 'የሴቶች ድርጅት') },
+                { value: 'YOUTH_ORG', label: t('Youth organisation', 'የወጣቶች ድርጅት') },
+                { value: 'DISABILITY_ORG', label: t('Disability organisation', 'የአካል ጉዳተኞች ድርጅት') },
+                { value: 'IDP_ORG', label: t('Organisation for displaced people or returnees', 'የተፈናቃዮች ወይም ተመላሾች ድርጅት') },
+                { value: 'CAMPAIGN', label: t('Advert or campaign', 'ማስታወቂያ ወይም ዘመቻ') },
+                { value: 'OTHER', label: t('Other', 'ሌላ') },
+              ]}
+            />
+          </Field>
+          <Field label={t('Which organisation? (optional)', 'የትኛው ድርጅት? (አማራጭ)')}>
+            <Input value={referrer} maxLength={160} onChange={(e) => setReferrer(e.target.value)} />
+          </Field>
         </div>
 
         <ErrorText error={error} />

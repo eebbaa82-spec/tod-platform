@@ -135,7 +135,8 @@ the password `Demo-2026!`:
 | 0920000203 | Kaleb Tadesse, Merkato Electronics |
 
 Run it on a fresh database; it does nothing if the demo accounts already
-exist.
+exist. The demo users are put in an approved "Demo pilot cohort", so they can
+take on work straight away.
 
 ## 5. Updating
 
@@ -178,6 +179,21 @@ docker compose --env-file .env start api web
 * The `HOLIDAYS` parameter holds this year's Ethiopian public holidays.
 * The consortium's published policy texts are in place (FR-SUP-06).
 * A restore from backup has been tested once.
+
+### Pilot controls (V-005)
+
+These are on by default and are changed in Console, Parameters:
+
+* `ESCROW_MODE` is `INTERIM` until regulated escrow is in place. Every
+  release and refund then needs two **different** finance officers (Console,
+  Interim payouts), so create at least two finance officer accounts. Set it
+  to `REGULATED` once the partner bank holds the money in escrow.
+* `COHORT_CONTROL_ENABLED` is `true`: only members of an approved pilot group
+  can pay for work. A platform administrator creates the group and adds
+  members by phone number; the super administrator (the Project Director)
+  approves it (Console, Pilot groups).
+* `GESI_TARGETS` and `GESI_FLAGS` hold the Inception Report targets used by
+  the GESI report.
 
 ## Useful commands
 

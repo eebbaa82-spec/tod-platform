@@ -1,4 +1,4 @@
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { IsBoolean, IsDateString, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
 
 export class ClientProfileDto {
   @IsIn(['VERIFIED_ENTERPRISE', 'BASIC_ENTERPRISE', 'INDIVIDUAL']) level: 'VERIFIED_ENTERPRISE' | 'BASIC_ENTERPRISE' | 'INDIVIDUAL';
@@ -8,6 +8,10 @@ export class ClientProfileDto {
   @IsOptional() @IsString() @MaxLength(80) sector?: string;
   @IsOptional() @IsString() @MaxLength(60) subCity?: string;
   @IsOptional() @IsInt() @Min(0) @Max(100000) staffSize?: number;
+  // Verified enterprises (FR-CLI-02).
+  @IsOptional() @IsDateString() establishedOn?: string;
+  @IsOptional() @IsString() @MaxLength(160) beneficialOwner?: string;
+  // Voluntary ownership flags, any level (FR-CLI-08).
   @IsOptional() @IsBoolean() womenLed?: boolean;
   @IsOptional() @IsBoolean() youthLed?: boolean;
   @IsOptional() @IsBoolean() pwdOwned?: boolean;

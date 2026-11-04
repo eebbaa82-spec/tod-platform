@@ -26,7 +26,6 @@ export function TrustBadge({ level }: { level: string }) {
   const { t } = useLang();
   const map: Record<string, { tone: 'green' | 'blue' | 'gray' | 'amber'; label: string }> = {
     NEW: { tone: 'gray', label: t('New talent', 'አዲስ ባለሙያ') },
-    ESTABLISHED: { tone: 'blue', label: t('Established', 'የተረጋገጠ ልምድ') },
     TRUSTED: { tone: 'green', label: t('Trusted', 'ታማኝ') },
     TOP_RATED: { tone: 'amber', label: t('Top rated', 'ከፍተኛ ደረጃ') },
   };

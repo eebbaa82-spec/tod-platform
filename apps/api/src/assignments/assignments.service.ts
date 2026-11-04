@@ -9,6 +9,7 @@ import { ParametersService } from '../common/parameters.service';
 import { PrismaService } from '../common/prisma.service';
 import { SequenceService } from '../common/sequence.service';
 import { addWorkingDays } from '../common/working-days';
+import { CohortsService } from '../cohorts/cohorts.service';
 import { ClientsService } from '../clients/clients.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CommissionService } from '../payments/commission.service';
@@ -34,6 +35,7 @@ export class AssignmentsService {
     private readonly payments: PaymentsService,
     private readonly clock: ClockService,
     private readonly files: FilesService,
+    private readonly cohorts: CohortsService,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -299,6 +301,8 @@ export class AssignmentsService {
 
     const { limit } = await this.clients.effectiveLimit(a.clientId);
     if (limit !== null && p.amount > limit) throw fail.bad('VALUE_LIMIT', `Your account level allows assignments up to ${formatEtb(limit)}.`);
+    // Only approved pilot cohorts transact live (FR-ADM-07).
+    await this.cohorts.assertLiveAllowed(a.clientId, p.talentId, p.amount);
 
     // The talent must still be within their concurrency limit (FR-TAL-06).
     const concurrency = await this.params.get<Record<string, number>>('TIER_CONCURRENCY');

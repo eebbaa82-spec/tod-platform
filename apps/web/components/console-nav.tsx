@@ -25,6 +25,8 @@ export const CONSOLE_ROLES = {
   auditVerify: ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'AUDITOR'],
   funding: ['FINANCE_OFFICER', 'SUPER_ADMIN', 'PLATFORM_ADMIN', 'AUDITOR'],
   fundingConfirm: ['FINANCE_OFFICER', 'SUPER_ADMIN'],
+  interim: ['FINANCE_OFFICER', 'AUDITOR', 'SUPER_ADMIN'],
+  cohorts: ['PLATFORM_ADMIN', 'SUPER_ADMIN', 'SUPPORT_AGENT', 'FINANCE_OFFICER', 'MEL_OFFICER', 'AUDITOR'],
 } as const;
 
 export function ConsoleNav() {
@@ -47,6 +49,8 @@ export function ConsoleNav() {
     { href: '/console/audit', label: t('Audit log', 'የኦዲት መዝገብ'), show: can('audit') },
     { href: '/console/staff', label: t('Staff and announcements', 'ሠራተኞች እና ማስታወቂያዎች'), show: can('staff') },
     { href: '/console/funding', label: t('Funding', 'ክፍያ'), show: can('funding') },
+    { href: '/console/interim', label: t('Interim payouts', 'ጊዜያዊ ክፍያዎች'), show: can('interim') },
+    { href: '/console/cohorts', label: t('Pilot groups', 'የሙከራ ቡድኖች'), show: can('cohorts') },
   ];
 
   const active = (href: string) => {

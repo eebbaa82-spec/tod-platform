@@ -49,7 +49,7 @@ async function makeTalent(name: string) {
 
 async function makeClient(name: string) {
   const c = await register(app, 'CLIENT', name);
-  await c.api.put('/clients/me', { level: 'VERIFIED_ENTERPRISE', enterpriseName: `${name} PLC`, tin: '0012345678', tradeLicenceNo: 'AA/123/2024', sector: 'Retail', subCity: 'Bole', staffSize: 6, referralSource: 'ASSOCIATION', womenLed: true });
+  await c.api.put('/clients/me', { level: 'VERIFIED_ENTERPRISE', enterpriseName: `${name} PLC`, tin: '0012345678', tradeLicenceNo: 'AA/123/2024', establishedOn: '2019-05-01', beneficialOwner: `${name} Owner`, sector: 'Retail', subCity: 'Bole', staffSize: 6, referralSource: 'ASSOCIATION', womenLed: true });
   await vet.post(`/dev/identity/${c.id}`, { status: 'VERIFIED', verifiedName: `${name} Owner`, sex: 'FEMALE', dateOfBirth: '1988-01-01', bankReference: `${6000_0000_0000_0000 + refSeq++}` });
   await sup.post(`/clients/${c.id}/confirm-level`, { note: 'Checked' });
   return c;

@@ -106,7 +106,7 @@ function Header({ a }: { a: any }) {
 
   return (
     <div>
-      <PageTitle sub={a.ref} actions={<AssignmentStatus status={a.status} />}>
+      <PageTitle sub={a.ref} actions={<div className="flex flex-wrap items-center gap-2">{a.interim && <Badge tone="amber">{t('Interim escrow', 'ጊዜያዊ ዕግድ')}</Badge>}<AssignmentStatus status={a.status} /></div>}>
         {a.title}
       </PageTitle>
       <Card>
@@ -167,6 +167,7 @@ function PaymentPanel({ a, accepted }: { a: any; accepted: any }) {
     <Card title={t('Next step: pay into escrow', 'ቀጣይ ደረጃ፦ ለአጋር ባንኩ ይክፈሉ')}>
       <div className="space-y-3 text-sm">
         <p>{t('Pay the amount below to the partner bank. The bank holds the money safely. The talent is paid only after you accept the work.', 'ከታች ያለውን መጠን ለአጋር ባንኩ ይክፈሉ። ባንኩ ገንዘቡን በጥንቃቄ ይይዛል። ባለሙያው የሚከፈለው ሥራውን ከተቀበሉ በኋላ ብቻ ነው።')}</p>
+        {a.interim && <Alert tone="warning">{t('Pilot arrangement: until regulated escrow is in place, the money is held in a separate consortium account. Two finance officers must approve every payout or refund.', 'የሙከራ ዝግጅት፦ ተቆጣጣሪ ዕግድ እስኪዘጋጅ ድረስ ገንዘቡ በተለየ የጥምረቱ ሂሳብ ይያዛል። እያንዳንዱን ክፍያ ወይም ተመላሽ ሁለት የፋይናንስ ባለሙያዎች ማጽደቅ አለባቸው።')}</Alert>}
         <div className="grid gap-3 rounded-lg bg-amber-50 p-4 sm:grid-cols-2">
           <div>
             <p className="text-xs text-stone-600">{t('Amount to pay', 'የሚከፍሉት መጠን')}</p>

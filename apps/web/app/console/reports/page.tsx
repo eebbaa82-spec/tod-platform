@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useState } from 'react';
 import { FilterBar, qs } from '@/components/console-kit';
 import { CONSOLE_ROLES } from '@/components/console-nav';
@@ -118,11 +119,16 @@ function Reports() {
       <PageTitle
         sub={i ? t(`Period: ${date(i.period.from, lang)} to ${date(i.period.to, lang)}`, `ጊዜ፦ ${date(i.period.from, lang)} እስከ ${date(i.period.to, lang)}`) : t('Programme indicators', 'የፕሮግራም አመልካቾች')}
         actions={
-          has(...CONSOLE_ROLES.reportsExport) ? (
+          <div className="flex flex-wrap gap-2">
+            <Link href="/console/reports/gesi" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold hover:bg-stone-100">
+              {t('GESI report', 'የአካታችነት ሪፖርት')}
+            </Link>
+          {has(...CONSOLE_ROLES.reportsExport) ? (
             <a href={apiUrl(`/reports/export.xlsx${q}`)} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold hover:bg-stone-100">
               {t('Export to Excel', 'ወደ ኤክሴል ላክ')}
             </a>
-          ) : undefined
+          ) : null}
+          </div>
         }
       >
         {t('Reports', 'ሪፖርቶች')}

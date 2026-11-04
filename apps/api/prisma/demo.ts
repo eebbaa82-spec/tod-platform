@@ -7,6 +7,7 @@ import { NestFactory } from '@nestjs/core';
 import * as jwt from 'jsonwebtoken';
 import { AppModule } from '../src/app.module';
 import { config } from '../src/common/config';
+import { ParametersService } from '../src/common/parameters.service';
 import { PrismaService } from '../src/common/prisma.service';
 import { configureApp } from '../src/main';
 
@@ -91,12 +92,24 @@ async function main() {
     const clients: { id: string; call: Call }[] = [];
     for (const c of CLIENTS) {
       const u = await register('CLIENT', c.phone, c.name, 'en');
-      await u.call('PUT', '/clients/me', { level: 'VERIFIED_ENTERPRISE', enterpriseName: c.business, tin: '0012345678', tradeLicenceNo: 'AA/14/2025', sector: c.sector, subCity: c.subCity, staffSize: c.staff, referralSource: 'ASSOCIATION', womenLed: c.womenLed });
+      await u.call('PUT', '/clients/me', { level: 'VERIFIED_ENTERPRISE', enterpriseName: c.business, tin: '0012345678', tradeLicenceNo: 'AA/14/2025', establishedOn: '2018-03-01', beneficialOwner: c.name, sector: c.sector, subCity: c.subCity, staffSize: c.staff, referralSource: 'ASSOCIATION', womenLed: c.womenLed });
       await vet('POST', `/dev/identity/${u.id}`, { status: 'VERIFIED', verifiedName: c.name, sex: c.womenLed ? 'FEMALE' : 'MALE', dateOfBirth: '1987-06-01', bankReference: String(bankRef++) });
       await sup('POST', `/clients/${u.id}/confirm-level`, { note: 'Trade licence and TIN checked (demo)' });
       clients.push(u);
     }
     const [coffee, boutique, electronics] = clients;
+
+    // Everyone in the demo belongs to an approved pilot cohort (FR-ADM-07).
+    const cohort = await staffCall('POST', '/admin/cohorts', { name: 'Demo pilot cohort', description: 'Demonstration accounts', valueLimit: null });
+    await staffCall('POST', `/admin/cohorts/${cohort.id}/members`, { add: [...Object.values(talents).map((t) => t.id), ...clients.map((c) => c.id)] });
+    await staffCall('POST', `/admin/cohorts/${cohort.id}/approve`, { note: 'Demo data' });
+
+    // The two finished assignments are loaded as already paid out. In interim
+    // escrow mode (FR-ESC-14) a payout needs two finance officers, so the script
+    // switches to regulated mode for them and restores the setting afterwards.
+    const modeParam = await prisma.parameter.findUniqueOrThrow({ where: { key: 'ESCROW_MODE' } });
+    await prisma.parameter.update({ where: { key: 'ESCROW_MODE' }, data: { value: 'REGULATED' } });
+    app.get(ParametersService).invalidate();
 
     // Request a package, have the talent accept at the package price, agree and fund it.
     const funded = async (client: { call: Call }, area: string, packageCode: string, brief: string) => {
@@ -127,6 +140,9 @@ async function main() {
       await client.call('POST', `/ratings/assignments/${assignment.id}`, { scores: { quality: 5, timeliness: 5, communication: 4 }, comment: 'Excellent work, delivered on time.' });
       await talent.call('POST', `/ratings/assignments/${assignment.id}`, { scores: { clarityOfBrief: 5, responsiveness: 5, conduct: 5 } });
     }
+
+    await prisma.parameter.update({ where: { key: 'ESCROW_MODE' }, data: { value: modeParam.value as any } });
+    app.get(ParametersService).invalidate();
 
     // 3: delivered, waiting for the client to accept.
     const books = await funded(coffee, 'BOOKKEEPING', 'BK-MONTH', 'Monthly books for September, receipts are in a folder.');

@@ -195,19 +195,19 @@ FR-BIZ-01 to 15 are **Later** (R3 and R4).
 
 ## New in V-005
 
-Requirements added since V-002. R1 items are being built next.
+Requirements added since V-002.
 
 | ID | Release | Status | Notes |
 | --- | --- | --- | --- |
-| FR-TAL-12 | R1 | To do | Recruitment channel and referring organisation per talent |
-| FR-CLI-02, 03 | R1 | Partly | Owner verified through the partner bank; date of establishment and beneficial owner to add |
-| FR-CLI-08 | R1 | To do | Voluntary ownership flags for every client level |
-| FR-ESC-14 | R1 | Partly | Dual authorisation built; "interim" labelling and named case owner to add |
-| FR-DSP-09 | R1 | Partly | Stage targets built; intake timer and two-working-day alert to add |
-| FR-ADM-07 | R1 | To do | Live transactions limited to approved cohorts |
-| FR-MEL-11, 12 | R1 | To do | Ten GESI indicators monthly; group targets as parameters |
-| FR-BNP-11 to 13 | R2 | Later | Pay-later portfolio controls |
-| FR-COM-07 | R2 | Later | Effect of the inclusive rate by group |
-| FR-ADM-08 | R2 | Later | Integration-readiness register |
-| FR-BIZ-01 to 15 | R3, R4 | Later | Commercial operation and growth |
-
+| FR-TAL-12 | R1 | Built ✔ | "How did you hear about ToD?" channel and referring organisation on the talent profile |
+| FR-CLI-02, 03 | R1 | Built ✔ | Owner verified through the partner bank; verified enterprise needs date of establishment (not in the future) and beneficial owner |
+| FR-CLI-08 | R1 | Built ✔ | Voluntary women-led, youth-led and disability ownership flags at every client level |
+| FR-ESC-14 | R1 | Built ✔ | `ESCROW_MODE=INTERIM`: every release and refund waits for two different finance officers (Console, Interim payouts); assignments carry an "Interim escrow" label and a named case owner |
+| FR-DSP-09 | R1 | Built | Stage targets, intake timer, two-working-day alert and evidence lock |
+| FR-ADM-07 | R1 | Built ✔ | Pilot groups (Console, Pilot groups) approved by the super administrator; a proposal can only be accepted when both people are in an approved group, within its value limit |
+| FR-MEL-11, 12 | R1 | Built ✔ | Monthly GESI report (Console, Reports, GESI report) for the ten indicators, targets in `GESI_TARGETS`, flags in `GESI_FLAGS`, monthly flag notice to MEL officers |
+| BR-07 | R1 | Built | Basic and individual client limits set to 10,000 birr |
+| BR-16 | R1 | Built | Trust levels from completed work, rating, repeat clients and upheld disputes (`TRUST_THRESHOLDS`) |
+| BR-02 | R1 | Built | Inclusive 1% commission ends on `COMMISSION_INCLUSIVE_UNTIL` (22 Feb 2027) |
+| FR-TAL-08, BR-13, 14 | R2 | Later | Readiness index |
+| Pay-later | R2 | Partly | Cohort eligibility is stored; the feature itself is R2 |

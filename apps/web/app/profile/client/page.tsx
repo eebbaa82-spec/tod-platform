@@ -83,6 +83,8 @@ function ClientForm({ profile, onSaved }: { profile: any; onSaved: () => void })
   const [enterpriseName, setEnterpriseName] = useState(profile?.enterpriseName ?? '');
   const [tradeLicenceNo, setTradeLicenceNo] = useState(profile?.tradeLicenceNo ?? '');
   const [tin, setTin] = useState(profile?.tin ?? '');
+  const [establishedOn, setEstablishedOn] = useState<string>(profile?.establishedOn?.slice(0, 10) ?? '');
+  const [beneficialOwner, setBeneficialOwner] = useState(profile?.beneficialOwner ?? '');
   const [sector, setSector] = useState(profile?.sector ?? '');
   const [subCity, setSubCity] = useState(profile?.subCity ?? '');
   const [staffSize, setStaffSize] = useState(profile?.staffSize !== null && profile?.staffSize !== undefined ? String(profile.staffSize) : '');
@@ -108,6 +110,8 @@ function ClientForm({ profile, onSaved }: { profile: any; onSaved: () => void })
         enterpriseName: isEnterprise ? enterpriseName.trim() || undefined : undefined,
         tradeLicenceNo: isVerified ? tradeLicenceNo.trim() || undefined : undefined,
         tin: isVerified ? tin.trim() || undefined : undefined,
+        establishedOn: isVerified ? establishedOn || undefined : undefined,
+        beneficialOwner: isVerified ? beneficialOwner.trim() || undefined : undefined,
         sector: sector.trim() || undefined,
         subCity: subCity || undefined,
         staffSize: staffSize.trim() === '' ? undefined : Number(staffSize),
@@ -193,6 +197,12 @@ function ClientForm({ profile, onSaved }: { profile: any; onSaved: () => void })
             </Field>
             <Field label={t('Taxpayer number (TIN)', 'የግብር ከፋይ መለያ ቁጥር (TIN)')} hint={tinBad ? t('The TIN has 10 digits.', 'TIN 10 አሃዞች አሉት።') : undefined}>
               <Input inputMode="numeric" value={tin} onChange={(e) => setTin(e.target.value.replace(/\D/g, '').slice(0, 10))} />
+            </Field>
+            <Field label={t('Date the business was established', 'ንግዱ የተቋቋመበት ቀን')}>
+              <Input type="date" value={establishedOn} onChange={(e) => setEstablishedOn(e.target.value)} />
+            </Field>
+            <Field label={t('Beneficial owner', 'ተጠቃሚ ባለቤት')} hint={t('The person who ultimately owns or controls the business', 'ንግዱን በመጨረሻ የሚይዘው ወይም የሚቆጣጠረው ሰው')}>
+              <Input value={beneficialOwner} onChange={(e) => setBeneficialOwner(e.target.value)} maxLength={160} />
             </Field>
           </div>
         )}

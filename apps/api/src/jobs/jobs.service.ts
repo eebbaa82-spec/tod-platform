@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { MilestonesService } from '../assignments/milestones.service';
 import { DisputesService } from '../disputes/disputes.service';
 import { RatingsService } from '../ratings/ratings.service';
+import { GesiService } from '../reports/gesi.service';
 import { SupportService } from '../support/support.service';
 
 // Time-driven rules: review windows, deadlines, invitation expiry, rating
@@ -17,6 +18,7 @@ export class JobsService {
     private readonly ratings: RatingsService,
     private readonly disputes: DisputesService,
     private readonly support: SupportService,
+    private readonly gesi: GesiService,
   ) {}
 
   @Cron(CronExpression.EVERY_5_MINUTES)
@@ -37,6 +39,7 @@ export class JobsService {
         ['ratings', () => this.ratings.publishDue()],
         ['disputes', () => this.disputes.processDeadlines()],
         ['safeguarding', () => this.support.processAcknowledgements()],
+        ['gesiFlags', () => this.gesi.notifyMonthlyFlags()],
       ] as const) {
         try {
           results[name] = await fn();
