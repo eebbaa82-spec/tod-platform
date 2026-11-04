@@ -49,7 +49,7 @@ function remedyLabel(r: string | null | undefined, t: T) {
 }
 
 function roleLabel(r: string, t: T) {
-  return r === 'CLIENT' ? t('Client', 'ደንበኛ') : r === 'TALENT' ? t('Talent', 'ባለሙያ') : t('ToD mediator', 'የለሰሪው አስታራቂ');
+  return r === 'CLIENT' ? t('Client', 'ደንበኛ') : r === 'TALENT' ? t('Talent', 'ባለሙያ') : t('ToD mediator', 'የሥለ አስታራቂ');
 }
 
 function Dispute() {
@@ -97,7 +97,7 @@ function Dispute() {
           <p className="font-medium">{t('The problem', 'ችግሩ')}</p>
           <p className="whitespace-pre-wrap text-stone-700">{d.reason}</p>
         </div>
-        <p className="mt-3 text-xs text-stone-500">{t('The money for this stage is frozen at the bank until the case is closed. The mediator sees the package, the delivered work and the messages on ToD from when the dispute was opened.', 'ጉዳዩ እስኪዘጋ ድረስ የዚህ ደረጃ ገንዘብ በባንኩ ታግዷል። አስታራቂው ጥቅሉን፣ የቀረበውን ሥራ እና ክርክሩ በተከፈተበት ጊዜ በለሰሪው ላይ የነበሩትን መልእክቶች ያያል።')}</p>
+        <p className="mt-3 text-xs text-stone-500">{t('The money for this stage is frozen at the bank until the case is closed. The mediator sees the package, the delivered work and the messages on ToD from when the dispute was opened.', 'ጉዳዩ እስኪዘጋ ድረስ የዚህ ደረጃ ገንዘብ በባንኩ ታግዷል። አስታራቂው ጥቅሉን፣ የቀረበውን ሥራ እና ክርክሩ በተከፈተበት ጊዜ በሥለ ላይ የነበሩትን መልእክቶች ያያል።')}</p>
       </Card>
 
       {d.decisionStatus === 'PENDING_APPROVAL' && <Alert tone="info">{t('A decision has been written and is being checked by a second person. You will be told by SMS.', 'ውሳኔ ተጽፏል፣ በሁለተኛ ሰው እየተረጋገጠ ነው። በSMS ይነገርዎታል።')}</Alert>}
@@ -224,7 +224,7 @@ function Notes({ d, reload }: { d: any; reload: () => void }) {
               return (
                 <li key={n.id} className={`rounded-lg p-3 text-sm ${n.authorRole === 'STAFF' ? 'bg-sky-50' : mine ? 'bg-brand-50' : 'bg-stone-50'}`}>
                   <p className="text-xs font-semibold text-stone-600">
-                    {mine ? t('You', 'እርስዎ') : n.authorRole === 'STAFF' ? (n.authorName ?? t('ToD case officer', 'የለሰሪው ጉዳይ ኃላፊ')) : `${n.authorName ? `${n.authorName} · ` : ''}${roleLabel(n.authorRole, t)}`} · <span className="font-normal">{date(n.at, lang, true)}</span>
+                    {mine ? t('You', 'እርስዎ') : n.authorRole === 'STAFF' ? (n.authorName ?? t('ToD case officer', 'የሥለ ጉዳይ ኃላፊ')) : `${n.authorName ? `${n.authorName} · ` : ''}${roleLabel(n.authorRole, t)}`} · <span className="font-normal">{date(n.at, lang, true)}</span>
                   </p>
                   <p className="mt-1 whitespace-pre-wrap">{n.body}</p>
                   {(n.files?.length > 0 || n.fileIds?.length > 0) && (

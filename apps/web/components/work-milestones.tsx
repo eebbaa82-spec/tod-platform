@@ -246,7 +246,7 @@ function DisputeModal({ m, onClose }: { m: any; onClose: () => void }) {
   return (
     <Modal open onClose={onClose} title={t('Open a dispute', 'ክርክር ክፈት')}>
       <div className="space-y-3 text-sm">
-        <p>{t('A ToD mediator will look at the package, the delivered work and your messages here. The money stays safely with the bank until the case is decided.', 'የለሰሪው አስታራቂ ጥቅሉን፣ የቀረበውን ሥራ እና እዚህ ያሉ መልእክቶችዎን ይመለከታል። ጉዳዩ እስኪወሰን ገንዘቡ በባንኩ በጥንቃቄ ይቆያል።')}</p>
+        <p>{t('A ToD mediator will look at the package, the delivered work and your messages here. The money stays safely with the bank until the case is decided.', 'የሥለ አስታራቂ ጥቅሉን፣ የቀረበውን ሥራ እና እዚህ ያሉ መልእክቶችዎን ይመለከታል። ጉዳዩ እስኪወሰን ገንዘቡ በባንኩ በጥንቃቄ ይቆያል።')}</p>
         <Field label={t('What is the problem?', 'ችግሩ ምንድን ነው?')} hint={t('At least 10 letters.', 'ቢያንስ 10 ፊደላት።')}>
           <Textarea rows={4} value={reason} onChange={(e) => setReason(e.target.value)} maxLength={3000} />
         </Field>
@@ -275,7 +275,7 @@ function SettlementBox({ s, role }: { s: any; role: string }) {
   const rows: [React.ReactNode, React.ReactNode][] = [[t('Type', 'ዓይነት'), kind]];
   if (s.gross > 0) {
     rows.push([t('Amount for the work', 'ለሥራው የተከፈለ'), etb(s.gross)]);
-    rows.push([t(`ToD commission (${Math.round(Number(s.commissionRate) * 1000) / 10}%)`, `የለሰሪው ኮሚሽን (${Math.round(Number(s.commissionRate) * 1000) / 10}%)`), etb(s.commission)]);
+    rows.push([t(`ToD commission (${Math.round(Number(s.commissionRate) * 1000) / 10}%)`, `የሥለ ኮሚሽን (${Math.round(Number(s.commissionRate) * 1000) / 10}%)`), etb(s.commission)]);
     rows.push([t('Talent receives', 'ባለሙያው የሚቀበለው'), <span key="n" className="font-bold">{etb(s.net)}</span>]);
   }
   if (s.refundAmount > 0) rows.push([t('Returned to client', 'ለደንበኛው የተመለሰ'), etb(s.refundAmount)]);
@@ -314,13 +314,13 @@ function ReceiptModal({ refNo, onClose }: { refNo: string; onClose: () => void }
               [t('Client', 'ደንበኛ'), `${r.client.name}${r.client.tin ? ` (TIN ${r.client.tin})` : ''}`],
               [t('Talent', 'ባለሙያ'), r.talent.name],
               [t('Amount for the work', 'ለሥራው የተከፈለ'), etb(r.gross)],
-              [t(`ToD commission (${Math.round(r.commissionRate * 1000) / 10}%)`, `የለሰሪው ኮሚሽን (${Math.round(r.commissionRate * 1000) / 10}%)`), etb(r.commission)],
+              [t(`ToD commission (${Math.round(r.commissionRate * 1000) / 10}%)`, `የሥለ ኮሚሽን (${Math.round(r.commissionRate * 1000) / 10}%)`), etb(r.commission)],
               [t('Paid to talent', 'ለባለሙያው የተከፈለ'), etb(r.net)],
               ...(r.refund > 0 ? ([[t('Refunded to client', 'ለደንበኛው የተመለሰ'), etb(r.refund)]] as [React.ReactNode, React.ReactNode][]) : []),
               [t('Status', 'ሁኔታ'), r.status === 'PAID' ? t('Paid', 'ተከፍሏል') : t('Waiting for the bank', 'ባንኩን በመጠበቅ ላይ')],
             ]}
           />
-          <p className="text-xs text-stone-500">{t('Client money is held by the partner bank in escrow. The ToD commission is taken from the talent payment.', 'የደንበኛ ገንዘብ በአጋር ባንኩ ይያዛል። የለሰሪው ኮሚሽን ከባለሙያው ክፍያ ይቀነሳል።')}</p>
+          <p className="text-xs text-stone-500">{t('Client money is held by the partner bank in escrow. The ToD commission is taken from the talent payment.', 'የደንበኛ ገንዘብ በአጋር ባንኩ ይያዛል። የሥለ ኮሚሽን ከባለሙያው ክፍያ ይቀነሳል።')}</p>
           <Button tone="secondary" onClick={() => window.print()} className="w-full">{t('Print', 'አትም')}</Button>
         </div>
       )}

@@ -5,7 +5,7 @@ type T = { en: { title: string; body: string }; am: { title: string; body: strin
 export const TEMPLATES: Record<string, T> = {
   OTP: {
     en: { title: 'Your code', body: 'Your ToD code is {code}. It expires in {minutes} minutes. Do not share it.' },
-    am: { title: 'የእርስዎ ኮድ', body: 'የለሰሪው ኮድዎ {code} ነው። በ{minutes} ደቂቃ ውስጥ ጊዜው ያልፋል። ለማንም አያጋሩ።' },
+    am: { title: 'የእርስዎ ኮድ', body: 'የሥለ ኮድዎ {code} ነው። በ{minutes} ደቂቃ ውስጥ ጊዜው ያልፋል። ለማንም አያጋሩ።' },
   },
   ACCOUNT_LOCKED: {
     en: { title: 'Account locked', body: 'Too many failed sign-ins. Your account is locked for {minutes} minutes. If this was not you, contact support.' },

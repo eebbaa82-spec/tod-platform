@@ -95,7 +95,7 @@ function Header({ a }: { a: any }) {
   else if (a.budgetMax) rows.push([t('Budget', 'በጀት'), t(`up to ${etb(a.budgetMax)}`, `እስከ ${etb(a.budgetMax)}`)]);
   if (role === 'TALENT' && a.agreedPrice && rate !== null) {
     const commission = Math.round(a.agreedPrice * rate);
-    rows.push([t(`ToD commission (${Math.round(rate * 1000) / 10}%)`, `የለሰሪው ኮሚሽን (${Math.round(rate * 1000) / 10}%)`), etb(commission)]);
+    rows.push([t(`ToD commission (${Math.round(rate * 1000) / 10}%)`, `የሥለ ኮሚሽን (${Math.round(rate * 1000) / 10}%)`), etb(commission)]);
     rows.push([t('You receive', 'የሚቀበሉት'), <span key="n" className="font-bold text-green-700">{etb(a.agreedPrice - commission)}</span>]);
   }
   if (role !== 'CLIENT') rows.push([t('Client', 'ደንበኛ'), <span key="c">{a.client?.name} {a.client?.verified && <Badge tone="green">✓ {t('Verified', 'ተረጋግጧል')}</Badge>}</span>]);
