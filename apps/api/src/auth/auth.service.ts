@@ -16,6 +16,10 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { AssistedRegisterDto, LoginDto, RegisterDto, ResetPasswordDto } from './dto';
 import { OtpService } from './otp.service';
 
+// Accept a code from one 30-second step either side (RFC 6238, section 5.2): phone
+// clocks drift, and the password check runs before the code is checked.
+authenticator.options = { window: 1 };
+
 export interface SessionResult {
   token: string;
   user: ReturnType<AuthService['publicUser']>;
